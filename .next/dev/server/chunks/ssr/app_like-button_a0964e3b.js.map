@@ -1,6 +1,0 @@
-{
-  "version": 3,
-  "sources": [],
-  "sections": [
-    {"offset": {"line": 4, "column": 0}, "map": {"version":3,"sources":["file:///home/nicol/projects/practicenext/app/like-button.js"],"sourcesContent":["'use client';\n\nimport { useState } from 'react';\n \nexport default function LikeButton() {\n  const [likes, setLikes] = useState(0);\n   \n  function handleClick() {\n    setLikes(likes + 1);\n  }\n  \n  return <button onClick={handleClick}>Like ({likes})</button>\n}"],"names":[],"mappings":";;;;;AAEA;AAFA;;;AAIe,SAAS;IACtB,MAAM,CAAC,OAAO,SAAS,GAAG,IAAA,iNAAQ,EAAC;IAEnC,SAAS;QACP,SAAS,QAAQ;IACnB;IAEA,qBAAO,8OAAC;QAAO,SAAS;;YAAa;YAAO;YAAM;;;;;;;AACpD","debugId":null}}]
-}
