@@ -1,0 +1,153 @@
+[00:00:01.009] Server  LOG      ✓ Ready in 680ms
+[00:00:05.286] Server  ERROR    ⨯ ./app/dictionary.js:8:1
+Module not found: Can't resolve 'fs'
+   6 | 'use client';
+   7 |
+>  8 | import { promises as fs } from 'fs'
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   9 | import { currentDateSeed, sample } from './utils';
+  10 |
+  11 | const dictionary = await fs.readFile('HSK词典.json', 'utf8')
+
+
+
+Import trace:
+  Server Component:
+    ./app/dictionary.js
+    ./app/page.js
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+[00:00:06.359] Browser ERROR   uncaughtError: Error: ./app/dictionary.js:8:1
+Module not found: Can't resolve 'fs'
+   6 | 'use client';
+   7 |
+>  8 | import { promises as fs } from 'fs'
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   9 | import { currentDateSeed, sample } from './utils';
+  10 |
+  11 | const dictionary = await fs.readFile('HSK词典.json', 'utf8')
+
+
+
+Import trace:
+  Server Component:
+    ./app/dictionary.js
+    ./app/page.js
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+[00:00:06.630] Browser ERROR   ./app/dictionary.js:8:1
+Module not found: Can't resolve 'fs'
+   6 | 'use client';
+   7 |
+>  8 | import { promises as fs } from 'fs'
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   9 | import { currentDateSeed, sample } from './utils';
+  10 |
+  11 | const dictionary = await fs.readFile('HSK词典.json', 'utf8')
+
+Import trace:
+  Server Component:
+    ./app/dictionary.js
+    ./app/page.js
+
+https://nextjs.org/docs/messages/module-not-found
+[00:00:06.630] Browser ERROR   ./app/dictionary.js:8:1
+Module not found: Can't resolve 'fs'
+   6 | 'use client';
+   7 |
+>  8 | import { promises as fs } from 'fs'
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   9 | import { currentDateSeed, sample } from './utils';
+  10 |
+  11 | const dictionary = await fs.readFile('HSK词典.json', 'utf8')
+
+Import trace:
+  Server Component:
+    ./app/dictionary.js
+    ./app/page.js
+
+https://nextjs.org/docs/messages/module-not-found
+[00:00:06.630] Browser ERROR   ./app/dictionary.js:8:1
+Module not found: Can't resolve 'fs'
+   6 | 'use client';
+   7 |
+>  8 | import { promises as fs } from 'fs'
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   9 | import { currentDateSeed, sample } from './utils';
+  10 |
+  11 | const dictionary = await fs.readFile('HSK词典.json', 'utf8')
+
+Import trace:
+  Server Component:
+    ./app/dictionary.js
+    ./app/page.js
+
+https://nextjs.org/docs/messages/module-not-found
+[00:00:45.447] Server  ERROR    ⨯ ./app/dictionary.js:8:1
+Module not found: Can't resolve 'fs'
+   6 | 'use client';
+   7 |
+>  8 | import { promises as fs } from 'fs'
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   9 | import { currentDateSeed, sample } from './utils';
+  10 |
+  11 | const dictionary = await fs.readFile('HSK词典.json', 'utf8')
+
+
+
+Import trace:
+  Server Component:
+    ./app/dictionary.js
+    ./app/page.js
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+[00:00:45.447] Server  ERROR    ⨯ ./app/dictionary.js:8:1
+Module not found: Can't resolve 'fs'
+   6 | 'use client';
+   7 |
+>  8 | import { promises as fs } from 'fs'
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   9 | import { currentDateSeed, sample } from './utils';
+  10 |
+  11 | const dictionary = await fs.readFile('HSK词典.json', 'utf8')
+
+
+
+Import trace:
+  Server Component:
+    ./app/dictionary.js
+    ./app/page.js
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+[00:00:46.038] Browser ERROR   ./app/dictionary.js:8:1
+Module not found: Can't resolve 'fs'
+   6 | 'use client';
+   7 |
+>  8 | import { promises as fs } from 'fs'
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   9 | import { currentDateSeed, sample } from './utils';
+  10 |
+  11 | const dictionary = await fs.readFile('HSK词典.json', 'utf8')
+
+Import trace:
+  Server Component:
+    ./app/dictionary.js
+    ./app/page.js
+
+https://nextjs.org/docs/messages/module-not-found
+[00:01:08.532] Server  LOG      ✓ Compiled in 37ms
+[00:01:08.905] Server  LOG     Today's words: 队长, 下游, 紊乱, 理事, 硬件, 兴起, 科普, 分离
+[00:01:08.915] Server  ERROR    ⨯ ReferenceError: currentDateSeed is not defined
+[00:01:09.175] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[00:01:10.038] Browser ERROR   uncaughtError: ReferenceError: currentDateSeed is not defined
+[00:01:27.661] Server  LOG     Today's words: 队长, 下游, 紊乱, 理事, 硬件, 兴起, 科普, 分离
+[00:01:27.662] Server  LOG     currentDateSeed: 2025-10-17
+[00:01:27.832] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold

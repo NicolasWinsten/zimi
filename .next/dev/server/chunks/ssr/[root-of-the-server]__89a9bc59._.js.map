@@ -1,0 +1,6 @@
+{
+  "version": 3,
+  "sources": [],
+  "sections": [
+    {"offset": {"line": 10, "column": 0}, "map": {"version":3,"sources":["file:///home/nicol/projects/practicenext/app/page.js"],"sourcesContent":["\nfunction Header({ title }) {\n  return <h1>{title ? title : 'Default title'}</h1>;\n}\n \nexport default function HomePage() {\n  const names = ['Ada Lovelace', 'Grace Hopper', 'Margaret Hamilton'];\n \n  return (\n    <div>\n      <Header title=\"Develop. Preview. Ship.\" />\n      <ul>\n        {names.map((name) => (\n          <li key={name}>{name}</li>\n        ))}\n      </ul>\n \n    </div>\n  );\n}"],"names":[],"mappings":";;;;;;AACA,SAAS,OAAO,EAAE,KAAK,EAAE;IACvB,qBAAO,8OAAC;kBAAI,QAAQ,QAAQ;;;;;;AAC9B;AAEe,SAAS;IACtB,MAAM,QAAQ;QAAC;QAAgB;QAAgB;KAAoB;IAEnE,qBACE,8OAAC;;0BACC,8OAAC;gBAAO,OAAM;;;;;;0BACd,8OAAC;0BACE,MAAM,GAAG,CAAC,CAAC,qBACV,8OAAC;kCAAe;uBAAP;;;;;;;;;;;;;;;;AAMnB","debugId":null}}]
+}
