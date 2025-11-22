@@ -3,13 +3,11 @@
  * Provides functions to access and sample words from the HSK dictionary.
  */
 
-
-import { promises as fs } from 'fs'
 import { currentDateSeed, sample } from './utils';
+import Dictionary from './api/data/HSK词典.json';
 
-const dictionary = await fs.readFile('HSK词典.json', 'utf8')
-  .then(JSON.parse)
-  .then(entries => entries.filter(entry => entry.simplified.length == 2))
+const dictionary = Dictionary.filter(entry => entry.simplified.length == 2)
+  .filter(({level}) => level.includes('old-3'))
 
 const dictionarySet = new Set(dictionary.map(entry => entry.simplified))
 

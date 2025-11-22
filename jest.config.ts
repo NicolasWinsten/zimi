@@ -4,6 +4,12 @@
  */
 
 import type {Config} from 'jest';
+import nextJest from 'next/jest';
+
+const createJestConfig = nextJest({
+  // Provide the path to your Next.js app to load next.config.js and .env files in your test environment
+  dir: './',
+});
 
 const config: Config = {
   // All imported modules in your tests should be mocked automatically
@@ -34,6 +40,8 @@ const config: Config = {
 
   // Indicates which provider should be used to instrument code for coverage
   coverageProvider: "v8",
+
+  testEnvironment: 'jsdom',
 
   // A list of reporter names that Jest uses when writing coverage reports
   // coverageReporters: [
@@ -167,6 +175,11 @@ const config: Config = {
   //   "/node_modules/"
   // ],
 
+  // ignore the Playwright tests folder, Jest tests are in __tests__
+  testPathIgnorePatterns: [
+    "/tests/"
+  ],
+
   // The regexp pattern or array of patterns that Jest uses to detect test files
   // testRegex: [],
 
@@ -198,4 +211,5 @@ const config: Config = {
   // watchman: true,
 };
 
-export default config;
+// createJestConfig is exported this way to ensure that next/jest can load the Next.js config which is async
+export default createJestConfig(config)
