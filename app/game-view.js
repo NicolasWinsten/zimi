@@ -6,6 +6,8 @@
 import { useState } from "react";
 import { isValidWord } from "./dictionary";
 import { produce } from "immer";
+import { useStopwatch } from "react-timer-hook";
+import next from "next";
 
 // possibly add functionality to generate more colors if needed (for bigger game boards)
 const matchColors = ['bg-green-300', 'bg-red-600', 'bg-teal-300', 'bg-orange-300', 'bg-pink-300', 'bg-red-300', 'bg-indigo-300', 'bg-amber-300'];
@@ -26,7 +28,7 @@ function HanziTile({ character, handleClick, selected, color }) {
 }
 
 // use a reducer to simplify the state logic here?
-function HanziGrid({ characters }) {
+function HanziGrid({ characters, onFinish }) {
   const [selectedTile, setSelectedTile] = useState(null);
   const [nextMatchColor, setNextMatchColor] = useState(0);
   const [tileStates, setTileStates] = useState(characters.map(c => ({ match: null, color: defaultTileColor })));
@@ -36,12 +38,16 @@ function HanziGrid({ characters }) {
     let color = matchColors[nextMatchColor];
     setNextMatchColor(nextMatchColor + 1);
     
-    setTileStates(produce(tileStates, draft => {
+    let newTileStates = produce(tileStates, draft => {
       draft[index1].match = index2;
       draft[index1].color = color;
       draft[index2].match = index1;
       draft[index2].color = color;
-    }))
+    })
+
+    setTileStates(newTileStates)
+    // check for game completion
+    if (newTileStates.every(tile => tile.match !== null)) onFinish()
   }
 
   function unMatchTiles(index1, index2) {
@@ -56,7 +62,6 @@ function HanziGrid({ characters }) {
   }
 
   function handleTileClick(index) {
-    console.log(`Tile clicked: ${index}, character: ${characters[index]}`);
     if (tileStates[index].match !== null) {
       unMatchTiles(index, tileStates[index].match);
       setSelectedTile(index);
@@ -69,9 +74,7 @@ function HanziGrid({ characters }) {
     else if (selectedTile !== null) {
       // check if selected tiles form a word
       const word = characters[selectedTile] + characters[index];
-      console.log(`Checking word: ${word}`);
       if (isValidWord(word)) {
-        console.log(`${word} is valid!`)
         matchTiles(selectedTile, index);
       }
       else console.log(`${word} is NOT valid!`);
@@ -86,14 +89,24 @@ function HanziGrid({ characters }) {
   return (
     <div className="grid grid-cols-4 gap-4">
       { characters.map((char, index) => <HanziTile key={char + index} color={tileStates[index].color} selected={index == selectedTile} character={char} handleClick={() => handleTileClick(index)}/>) }
+      <HanziTile character="你" color={matchColors[nextMatchColor]} />
     </div>
+    
   )
 }
 
 export default function GameView({ characters }) {
+  const stopWatch = useStopwatch({ autoStart: true, interval: 20 });
+
+  function onFinish() {
+    stopWatch.pause();
+    console.log(`Game finished in ${stopWatch.totalSeconds} seconds, and ${stopWatch.milliseconds} milliseconds!`);
+  }
+
   return (
     <div>
-      <HanziGrid characters={characters} />
+    <span>{stopWatch.totalSeconds}</span>:<span>{stopWatch.milliseconds}</span>
+      <HanziGrid characters={characters} onFinish={onFinish} />
     </div>
   )
 }
