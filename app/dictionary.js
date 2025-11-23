@@ -3,9 +3,11 @@
  * Provides functions to access and sample words from the HSK dictionary.
  */
 
-import { currentDateSeed, sample } from './utils';
+import { currentDateSeed, sample } from './utils.js';
 import Dictionary from './api/data/HSK词典.json';
 
+
+console.log("loading dictionary...");
 const dictionary = Dictionary.filter(entry => entry.simplified.length == 2)
   .filter(({level}) => level.includes('old-3'))
 

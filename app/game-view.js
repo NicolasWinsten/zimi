@@ -25,6 +25,7 @@ function HanziTile({ character, handleClick, selected, color }) {
   )
 }
 
+// use a reducer to simplify the state logic here?
 function HanziGrid({ characters }) {
   const [selectedTile, setSelectedTile] = useState(null);
   const [nextMatchColor, setNextMatchColor] = useState(0);
