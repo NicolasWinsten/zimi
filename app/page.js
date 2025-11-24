@@ -3,6 +3,7 @@ import GameView from "./game-view";
 import { getTodaysWords } from "./dictionary"; 
 import { currentDateSeed, sample } from "./utils";
 import DailyTimer from "./daily-timer";
+import SignInButton from "./signin-button";
 
 function Header({ title }) {
   return <h1>{title ? title : 'Default title'}</h1>;
@@ -18,6 +19,7 @@ export default function Page() {
   return (
       <div>
         <Header title="ZiMi字谜!" />
+        <SignInButton />
         <DailyTimer />
         <GameView characters={shuffledChars}/>
         <LikeButton />
