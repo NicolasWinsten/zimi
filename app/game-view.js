@@ -3,11 +3,12 @@
  */
 
 'use client';
-import { useState } from "react";
+import { useState, useReducer, useEffect } from "react";
 import { isValidWord } from "./dictionary";
 import { produce } from "immer";
 import { useStopwatch } from "react-timer-hook";
 import next from "next";
+import { on } from "events";
 
 // possibly add functionality to generate more colors if needed (for bigger game boards)
 const matchColors = ['bg-green-300', 'bg-red-600', 'bg-teal-300', 'bg-orange-300', 'bg-pink-300', 'bg-red-300', 'bg-indigo-300', 'bg-amber-300'];
@@ -27,61 +28,82 @@ function HanziTile({ character, handleClick, selected, color }) {
   )
 }
 
-// use a reducer to simplify the state logic here?
+const initialGridState = (characters) => ({
+  tileStates: characters.map(c => ({ match: null, color: defaultTileColor })),
+  remainingColors: [...matchColors],
+  selectedTile: null,
+  completed: false,
+});
+
+function gridReducer(state, action) {
+  switch(action.type) {
+    case 'match': {
+      const [index1, index2] = action.tiles;
+      const color = state.remainingColors[0];
+      const newState = produce(state, draft => {
+        draft.tileStates[index1].match = index2;
+        draft.tileStates[index1].color = color;
+        draft.tileStates[index2].match = index1;
+        draft.tileStates[index2].color = color;
+        draft.remainingColors = draft.remainingColors.slice(1);
+        draft.selectedTile = null;
+      });
+      // check for game completion
+      if (newState.tileStates.every(t => t.match !== null))
+        return {...newState, completed: true };
+      else return newState;
+    }
+    case 'unmatch': {
+      const tile1 = action.tile;
+      const tile2 = state.tileStates[tile1].match;
+      const color = state.tileStates[tile1].color;
+      return produce(state, draft => {
+        draft.tileStates[tile1].match = null
+        draft.tileStates[tile1].color = defaultTileColor;
+        draft.tileStates[tile2].match = null;
+        draft.tileStates[tile2].color = defaultTileColor;
+        draft.remainingColors.unshift(color);
+      });
+    }
+    case 'select': {
+      return {...state, selectedTile: action.tile };
+    }
+    case 'deselect': {
+      return {...state, selectedTile: null };
+    }
+    default: {
+      throw new Error(`Unhandled action type: ${action.type}`);
+    }
+  }
+}
+
 function HanziGrid({ characters, onFinish }) {
-  const [selectedTile, setSelectedTile] = useState(null);
-  const [nextMatchColor, setNextMatchColor] = useState(0);
-  const [tileStates, setTileStates] = useState(characters.map(c => ({ match: null, color: defaultTileColor })));
-
-  function matchTiles(index1, index2) {
-    // must ensure nextMatchColor is within bounds (!)
-    let color = matchColors[nextMatchColor];
-    setNextMatchColor(nextMatchColor + 1);
-    
-    let newTileStates = produce(tileStates, draft => {
-      draft[index1].match = index2;
-      draft[index1].color = color;
-      draft[index2].match = index1;
-      draft[index2].color = color;
-    })
-
-    setTileStates(newTileStates)
-    // check for game completion
-    if (newTileStates.every(tile => tile.match !== null)) onFinish()
-  }
-
-  function unMatchTiles(index1, index2) {
-    setNextMatchColor(nextMatchColor - 1);
-
-    setTileStates(produce(tileStates, draft => {
-      draft[index1].match = null;
-      draft[index1].color = defaultTileColor;
-      draft[index2].match = null;
-      draft[index2].color = defaultTileColor;
-    }))
-  }
+  const [{tileStates, selectedTile, remainingColors, completed}, dispatch] = useReducer(gridReducer, initialGridState(characters));
 
   function handleTileClick(index) {
+    if (completed) return;
+    
     if (tileStates[index].match !== null) {
-      unMatchTiles(index, tileStates[index].match);
-      setSelectedTile(index);
-      return;
+      dispatch({ type: 'unmatch', tile: index });
     }
     else if (selectedTile === index) {
-      setSelectedTile(null);
-      return;
+      dispatch({ type: 'deselect' });
     }
     else if (selectedTile !== null) {
       // check if selected tiles form a word
       const word = characters[selectedTile] + characters[index];
       if (isValidWord(word)) {
-        matchTiles(selectedTile, index);
+        console.log(`${word} is valid!`);
+        dispatch({ type: 'match', tiles: [selectedTile, index] });
+        // super hacky way to check for game completion. i don't like it. change it (!)
+        if (tileStates.filter(t => t.match === null).length === 2) onFinish();
+      } else {
+        console.log(`${word} is NOT valid!`);
+        dispatch({ type: 'deselect' });
       }
-      else console.log(`${word} is NOT valid!`);
-      setSelectedTile(null);
-      return;
+    } else {
+      dispatch({ type: 'select', tile: index });
     }
-    else setSelectedTile(index);
   }
 
   // I use the index as the key for character tiles here but allegedly you shouldn't do that.
@@ -89,7 +111,6 @@ function HanziGrid({ characters, onFinish }) {
   return (
     <div className="grid grid-cols-4 gap-4">
       { characters.map((char, index) => <HanziTile key={char + index} color={tileStates[index].color} selected={index == selectedTile} character={char} handleClick={() => handleTileClick(index)}/>) }
-      <HanziTile character="你" color={matchColors[nextMatchColor]} />
     </div>
     
   )
