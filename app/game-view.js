@@ -3,7 +3,7 @@
  */
 
 'use client';
-import { useState, useReducer, useEffect } from "react";
+import { useReducer } from "react";
 import { isValidWord } from "./dictionary";
 import { produce } from "immer";
 import { useStopwatch } from "react-timer-hook";
