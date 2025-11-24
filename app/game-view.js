@@ -7,8 +7,7 @@ import { useState, useReducer, useEffect } from "react";
 import { isValidWord } from "./dictionary";
 import { produce } from "immer";
 import { useStopwatch } from "react-timer-hook";
-import next from "next";
-import { on } from "events";
+import { MaShanZheng } from "./ui/fonts";
 
 // possibly add functionality to generate more colors if needed (for bigger game boards)
 const matchColors = ['bg-green-300', 'bg-red-600', 'bg-teal-300', 'bg-orange-300', 'bg-pink-300', 'bg-red-300', 'bg-indigo-300', 'bg-amber-300'];
@@ -109,7 +108,7 @@ function HanziGrid({ characters, onFinish }) {
   // I use the index as the key for character tiles here but allegedly you shouldn't do that.
   // it may cause bugs if the tiles are rearranged or removed.
   return (
-    <div className="grid grid-cols-4 gap-4">
+    <div className={MaShanZheng.className + " grid grid-cols-4 gap-4"}>
       { characters.map((char, index) => <HanziTile key={char + index} color={tileStates[index].color} selected={index == selectedTile} character={char} handleClick={() => handleTileClick(index)}/>) }
     </div>
     
