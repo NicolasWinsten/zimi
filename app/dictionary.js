@@ -4,7 +4,7 @@
  */
 
 import { currentDateSeed, sample } from './utils.js';
-import Dictionary from './api/data/HSK词典.json';
+import Dictionary from 'public/HSK词典.json';
 
 
 console.log("loading dictionary...");

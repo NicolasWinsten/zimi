@@ -16,4 +16,5 @@ node_modules/
 
 # production
 /build
-.env.local
+.env*
+.vercel
