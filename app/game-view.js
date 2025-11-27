@@ -40,13 +40,18 @@ function HanziTile({ character, handleClick, selected, matchColor, shaking}) {
           <div className={`w-12 h-12 border-4 ${matchColorClass} rounded-full`}></div>
         </div>
       )}
+      {shaking && ( // when the tile is shaking, show a red flash overlay
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <div className="w-full h-full rounded-lg tile-flash-overlay" />
+        </div>
+      )}
       {character}
     </button>
   )
 }
 
 const initialGridState = (characters) => ({
-  tileStates: characters.map(c => ({ match: null, color: null, shaking: false })),
+  tileStates: characters.map(c => ({ match: null, color: null, shaking: false})),
   remainingColors: [...matchColors],
   selectedTile: null,
   completed: false,
@@ -82,6 +87,7 @@ function gridReducer(state, action) {
         draft.remainingColors.unshift(color);
       });
     }
+    
     case 'shake': {
       // const tiles = action.tiles || [];
       const [tile1, tile2] = action.tiles;
@@ -103,6 +109,20 @@ function gridReducer(state, action) {
         // tiles.forEach(i => { if (draft.tileStates[i]) draft.tileStates[i].shaking = false });
       });
     }
+    // case 'flash': {
+    //   const [tile1, tile2] = action.tiles;
+    //   return produce(state, draft => {
+    //     draft.tileStates[tile1].flashing = true;
+    //     draft.tileStates[tile2].flashing = true;
+    //   });
+    // }
+    // case 'clear-flash': {
+    //   const [tile1, tile2] = action.tiles;
+    //   return produce(state, draft => {
+    //     draft.tileStates[tile1].flashing = false;
+    //     draft.tileStates[tile2].flashing = false;
+    //   });
+    // }
     case 'select': {
       return {...state, selectedTile: action.tile };
     }
@@ -137,11 +157,14 @@ function HanziGrid({ characters, onFinish }) {
         if (tileStates.filter(t => t.match === null).length === 2) onFinish();
       } else {
         console.log(`${word} is NOT valid!`);
-        // Trigger a shake animation on both tiles, then deselect
-        dispatch({ type: 'shake', tiles: [selectedTile, index] });
+        // Trigger a shake + flash animation on both tiles, then clear and deselect
+        const tiles = [selectedTile, index];
+        dispatch({ type: 'shake', tiles });
+        // dispatch({ type: 'flash', tiles });
         dispatch({ type: 'deselect' });
         setTimeout(() => {
-          dispatch({ type: 'clear-shake', tiles: [selectedTile, index] });
+          dispatch({ type: 'clear-shake', tiles });
+          // dispatch({ type: 'clear-flash', tiles });
         }, 500);
       }
     } else {
@@ -154,7 +177,7 @@ function HanziGrid({ characters, onFinish }) {
   return (
     <div className={`${MaShanZheng.className} flex justify-center`}>
       <div className="grid grid-cols-4 gap-1 w-fit">
-        { characters.map((char, index) => <HanziTile key={char + index} matchColor={tileStates[index].color} selected={index == selectedTile} shaking={tileStates[index].shaking} character={char} handleClick={() => handleTileClick(index)}/>) }
+        { characters.map((char, index) => <HanziTile key={char + index} matchColor={tileStates[index].color} selected={index == selectedTile} shaking={tileStates[index].shaking} flashing={tileStates[index].flashing} character={char} handleClick={() => handleTileClick(index)}/>) }
       </div>
     </div>
     

@@ -30,6 +30,17 @@ body {
 	100% { transform: translateX(0); }
 }
 .tile-shake {
-	animation: tile-shake 0.48s ease-in-out;
+	animation: tile-shake 0.5s ease-in-out;
 	will-change: transform;
+}
+
+/* Flash overlay for mismatch feedback */
+@keyframes tile-flash {
+	0% { opacity: 0.9; }
+	40% { opacity: 0.6; }
+	100% { opacity: 0; }
+}
+.tile-flash-overlay {
+	background: rgba(239,68,68,0.28); /* red-500 with transparency */
+	animation: tile-flash 0.5s ease-out;
 }
