@@ -26,6 +26,12 @@ export async function getTopScores(limit = 10) {
   return scores;
 }
 
+/**
+ * Submit how long the user took to finish today's game. If the given time is null,
+ * it indicates the user did got three strikes and failed to complete the game.
+ * @param {number} milliseconds 
+ * @returns 
+ */
 export async function submitDailyScore(milliseconds) {
   const session = await getServerSession(authOptions);
 
@@ -39,7 +45,10 @@ export async function submitDailyScore(milliseconds) {
     ON CONFLICT (user_id, date) DO NOTHING
     RETURNING *;
   `;
-  console.log(`${session.user.email} submitted a score of ${milliseconds} ms on ${new Date().toISOString().split('T')[0]}`);
+
+  if (milliseconds !== null)
+    console.log(`${session.user.email} submitted a score of ${milliseconds} ms on ${new Date().toISOString().split('T')[0]}`);
+  else console.log(`${session.user.email} failed to complete today's game on ${new Date().toISOString().split('T')[0]}`);
   return result 
 }
 

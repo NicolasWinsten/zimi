@@ -3,7 +3,7 @@
  */
 
 'use client';
-import { useReducer } from "react";
+import { useReducer, useEffect } from "react";
 import { isValidWord } from "./dictionary";
 import { produce } from "immer";
 import { useStopwatch } from "react-timer-hook";
@@ -55,6 +55,7 @@ const initialGridState = (characters) => ({
   remainingColors: [...matchColors],
   selectedTile: null,
   completed: false,
+  strikes: 0,
 });
 
 function gridReducer(state, action) {
@@ -87,42 +88,26 @@ function gridReducer(state, action) {
         draft.remainingColors.unshift(color);
       });
     }
+
+    case 'strike': {
+      return {...state, strikes: state.strikes + 1};
+    }
     
     case 'shake': {
-      // const tiles = action.tiles || [];
       const [tile1, tile2] = action.tiles;
       return produce(state, draft => {
         draft.tileStates[tile1].shaking = true;
         draft.tileStates[tile2].shaking = true;
-        //
-        // tiles.forEach(i => { if (draft.tileStates[i]) draft.tileStates[i].shaking = true });
       });
     }
     case 'clear-shake': {
-      // const tiles = action.tiles || [];
       const [tile1, tile2] = action.tiles;  
       return produce(state, draft => {
         draft.tileStates[tile1].shaking = false;
         draft.tileStates[tile2].shaking = false;
-        //
-        //
-        // tiles.forEach(i => { if (draft.tileStates[i]) draft.tileStates[i].shaking = false });
       });
     }
-    // case 'flash': {
-    //   const [tile1, tile2] = action.tiles;
-    //   return produce(state, draft => {
-    //     draft.tileStates[tile1].flashing = true;
-    //     draft.tileStates[tile2].flashing = true;
-    //   });
-    // }
-    // case 'clear-flash': {
-    //   const [tile1, tile2] = action.tiles;
-    //   return produce(state, draft => {
-    //     draft.tileStates[tile1].flashing = false;
-    //     draft.tileStates[tile2].flashing = false;
-    //   });
-    // }
+    
     case 'select': {
       return {...state, selectedTile: action.tile };
     }
@@ -136,10 +121,15 @@ function gridReducer(state, action) {
 }
 
 function HanziGrid({ characters, onFinish }) {
-  const [{tileStates, selectedTile, remainingColors, completed}, dispatch] = useReducer(gridReducer, initialGridState(characters));
+  const [{tileStates, selectedTile, remainingColors, completed, strikes}, dispatch] = useReducer(gridReducer, initialGridState(characters));
+
+  // When the user finishes the game, submit a score (or failure if 3 strikes)
+  useEffect(() => {
+    if (strikes === 3 || completed) onFinish(completed)
+  }, [strikes, completed]);
 
   function handleTileClick(index) {
-    if (completed) return; // no action if game is completed
+    if (completed || strikes == 3) return; // no action if game is completed
 
     if (tileStates[index].match !== null) {
       dispatch({ type: 'unmatch', tile: index });
@@ -153,18 +143,15 @@ function HanziGrid({ characters, onFinish }) {
       if (isValidWord(word)) {
         console.log(`${word} is valid!`);
         dispatch({ type: 'match', tiles: [selectedTile, index] });
-        // super hacky way to check for game completion. i don't like it. change it (!)
-        if (tileStates.filter(t => t.match === null).length === 2) onFinish();
       } else {
         console.log(`${word} is NOT valid!`);
         // Trigger a shake + flash animation on both tiles, then clear and deselect
         const tiles = [selectedTile, index];
         dispatch({ type: 'shake', tiles });
-        // dispatch({ type: 'flash', tiles });
         dispatch({ type: 'deselect' });
+        dispatch({ type: 'strike'});
         setTimeout(() => {
           dispatch({ type: 'clear-shake', tiles });
-          // dispatch({ type: 'clear-flash', tiles });
         }, 500);
       }
     } else {
@@ -189,10 +176,11 @@ export default function GameView({ words }) {
   const shuffledChars = sample(todaysChars.length, todaysChars, currentDateSeed())
   const stopWatch = useStopwatch({ autoStart: true, interval: 20 });
 
-  function onFinish() {
+  function onFinish(completed) {
     stopWatch.pause();
     console.log(`Game finished in ${stopWatch.totalSeconds} seconds, and ${stopWatch.milliseconds} milliseconds!`);
-    submitDailyScore(stopWatch.totalSeconds * 1000 + stopWatch.milliseconds).then(console.log);
+    
+    submitDailyScore(completed ? stopWatch.totalSeconds * 1000 + stopWatch.milliseconds : null).then(console.log);
   }
 
   return (
