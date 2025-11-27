@@ -11,15 +11,6 @@ export const authOptions = {
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-      // this authorization part ensures we get refresh tokens on every signin
-      // remove this once we can store refresh tokens securely
-      // authorization: {
-      //   params: {
-      //     prompt: "consent",
-      //     access_type: "offline",
-      //     response_type: "code"
-      //   }
-      // }
     }),
   ],
   adapter: NeonAdapter(pool),

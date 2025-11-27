@@ -1,28 +1,25 @@
-import LikeButton from "./like-button";
-import GameView from "./game-view";
-import { getTodaysWords } from "./dictionary"; 
-import { currentDateSeed, sample } from "./utils";
-import DailyTimer from "./daily-timer";
-import SignInButton from "./signin-button";
+import GameView from "app/game-view";
+import { getTodaysWords } from "app/dictionary"; 
+import { currentDateSeed } from "app/utils";
+import DailyTimer from "app/daily-timer";
+import SignInButton from "app/signin-button";
 
 function Header({ title }) {
   return <h1>{title ? title : 'Default title'}</h1>;
 }
 
-export default function Page() {
+export default async function Page() {
+
   const todaysWords = getTodaysWords(8)
-  const todaysChars = todaysWords.flatMap(word => Array.from(word))
-  const shuffledChars = sample(todaysChars.length, todaysChars, currentDateSeed())
   console.log(`Today's words: ${todaysWords.join(', ')}`)
   console.log(`currentDateSeed: ${currentDateSeed()}`)
 
   return (
       <div>
         <Header title="ZiMi字谜!" />
-        <SignInButton />
         <DailyTimer />
-        <GameView characters={shuffledChars}/>
-        <LikeButton />
+        <GameView words={todaysWords} />
+        <SignInButton />
       </div>
   );
 }

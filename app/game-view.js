@@ -8,6 +8,8 @@ import { isValidWord } from "./dictionary";
 import { produce } from "immer";
 import { useStopwatch } from "react-timer-hook";
 import { MaShanZheng } from "./ui/fonts";
+import { currentDateSeed, sample } from "app/utils";
+import { submitDailyScore } from "./lib/db/db";
 
 // possibly add functionality to generate more colors if needed (for bigger game boards)
 const matchColors = ['bg-green-300', 'bg-red-600', 'bg-teal-300', 'bg-orange-300', 'bg-pink-300', 'bg-red-300', 'bg-indigo-300', 'bg-amber-300'];
@@ -80,8 +82,8 @@ function HanziGrid({ characters, onFinish }) {
   const [{tileStates, selectedTile, remainingColors, completed}, dispatch] = useReducer(gridReducer, initialGridState(characters));
 
   function handleTileClick(index) {
-    if (completed) return;
-    
+    if (completed) return; // no action if game is completed
+
     if (tileStates[index].match !== null) {
       dispatch({ type: 'unmatch', tile: index });
     }
@@ -115,18 +117,21 @@ function HanziGrid({ characters, onFinish }) {
   )
 }
 
-export default function GameView({ characters }) {
+export default function GameView({ words }) {
+  const todaysChars = words.flatMap(word => Array.from(word))
+  const shuffledChars = sample(todaysChars.length, todaysChars, currentDateSeed())
   const stopWatch = useStopwatch({ autoStart: true, interval: 20 });
 
   function onFinish() {
     stopWatch.pause();
     console.log(`Game finished in ${stopWatch.totalSeconds} seconds, and ${stopWatch.milliseconds} milliseconds!`);
+    submitDailyScore(stopWatch.totalSeconds * 1000 + stopWatch.milliseconds).then(console.log);
   }
 
   return (
     <div>
     <span>{stopWatch.totalSeconds}</span>:<span>{stopWatch.milliseconds}</span>
-      <HanziGrid characters={characters} onFinish={onFinish} />
+      <HanziGrid characters={shuffledChars} onFinish={onFinish} />
     </div>
   )
 }
