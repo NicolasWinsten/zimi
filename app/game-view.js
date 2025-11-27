@@ -14,14 +14,15 @@ import { submitDailyScore } from "./lib/db/db";
 // possibly add functionality to generate more colors if needed (for bigger game boards)
 const matchColors = ['border-green-300', 'border-red-600', 'border-teal-300', 'border-orange-300', 'border-pink-300', 'border-red-300', 'border-indigo-300', 'border-amber-300'];
 
-function HanziTile({ character, handleClick, selected, matchColor}) {
+function HanziTile({ character, handleClick, selected, matchColor, shaking}) {
   const scale = selected ? 'scale-120' : 'scale-100';
   const borderColor = selected ? 'border-amber-900' : 'border-amber-800';
   const shadowClass = selected ? 'shadow-lg' : 'shadow-md';
   const matchColorClass = `${matchColor}`
   const isMatched = !!matchColor;
+  const shakeClass = shaking ? 'tile-shake' : '';
   
-  const classes = `${scale} ${borderColor} ${shadowClass}
+  const classes = `${scale} ${borderColor} ${shadowClass} ${shakeClass}
     relative w-20 h-20 rounded-lg border-4
     flex items-center justify-center text-3xl
     transition-all duration-200
@@ -45,7 +46,7 @@ function HanziTile({ character, handleClick, selected, matchColor}) {
 }
 
 const initialGridState = (characters) => ({
-  tileStates: characters.map(c => ({ match: null, color: null })),
+  tileStates: characters.map(c => ({ match: null, color: null, shaking: false })),
   remainingColors: [...matchColors],
   selectedTile: null,
   completed: false,
@@ -79,6 +80,27 @@ function gridReducer(state, action) {
         draft.tileStates[tile2].match = null;
         draft.tileStates[tile2].color = null;
         draft.remainingColors.unshift(color);
+      });
+    }
+    case 'shake': {
+      // const tiles = action.tiles || [];
+      const [tile1, tile2] = action.tiles;
+      return produce(state, draft => {
+        draft.tileStates[tile1].shaking = true;
+        draft.tileStates[tile2].shaking = true;
+        //
+        // tiles.forEach(i => { if (draft.tileStates[i]) draft.tileStates[i].shaking = true });
+      });
+    }
+    case 'clear-shake': {
+      // const tiles = action.tiles || [];
+      const [tile1, tile2] = action.tiles;  
+      return produce(state, draft => {
+        draft.tileStates[tile1].shaking = false;
+        draft.tileStates[tile2].shaking = false;
+        //
+        //
+        // tiles.forEach(i => { if (draft.tileStates[i]) draft.tileStates[i].shaking = false });
       });
     }
     case 'select': {
@@ -115,7 +137,12 @@ function HanziGrid({ characters, onFinish }) {
         if (tileStates.filter(t => t.match === null).length === 2) onFinish();
       } else {
         console.log(`${word} is NOT valid!`);
+        // Trigger a shake animation on both tiles, then deselect
+        dispatch({ type: 'shake', tiles: [selectedTile, index] });
         dispatch({ type: 'deselect' });
+        setTimeout(() => {
+          dispatch({ type: 'clear-shake', tiles: [selectedTile, index] });
+        }, 500);
       }
     } else {
       dispatch({ type: 'select', tile: index });
@@ -127,7 +154,7 @@ function HanziGrid({ characters, onFinish }) {
   return (
     <div className={`${MaShanZheng.className} flex justify-center`}>
       <div className="grid grid-cols-4 gap-1 w-fit">
-        { characters.map((char, index) => <HanziTile key={char + index} matchColor={tileStates[index].color} selected={index == selectedTile} character={char} handleClick={() => handleTileClick(index)}/>) }
+        { characters.map((char, index) => <HanziTile key={char + index} matchColor={tileStates[index].color} selected={index == selectedTile} shaking={tileStates[index].shaking} character={char} handleClick={() => handleTileClick(index)}/>) }
       </div>
     </div>
     
