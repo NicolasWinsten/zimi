@@ -15,18 +15,18 @@ import { submitDailyScore } from "./lib/db/db";
 const matchColors = ['border-green-300', 'border-red-600', 'border-teal-300', 'border-orange-300', 'border-pink-300', 'border-red-300', 'border-indigo-300', 'border-amber-300'];
 
 function HanziTile({ character, handleClick, selected, matchColor, shaking}) {
-  const scale = selected ? 'scale-120' : 'scale-100';
+  const selectedClass = selected ? 'scale-120 z-1' : 'scale-100';
   const borderColor = selected ? 'border-amber-900' : 'border-amber-800';
   const shadowClass = selected ? 'shadow-lg' : 'shadow-md';
   const matchColorClass = `${matchColor}`
   const isMatched = !!matchColor;
   const shakeClass = shaking ? 'tile-shake' : '';
   
-  const classes = `${scale} ${borderColor} ${shadowClass} ${shakeClass}
+  const classes = `${selectedClass} ${borderColor} ${shadowClass} ${shakeClass}
     relative w-20 h-20 rounded-lg border-4
     flex items-center justify-center text-3xl
     transition-all duration-200
-    hover:scale-130 hover:shadow-lg hover:border-amber-700
+    hover:scale-130 hover:shadow-lg hover:border-amber-700 hover:z-1
     active:translate-y-1 active:shadow-sm
     cursor-pointer
     bg-gradient-to-br from-white via-gray-50 to-gray-200
