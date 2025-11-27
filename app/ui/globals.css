@@ -1,1 +1,21 @@
 @import 'tailwindcss';
+
+/* Page background using public/wood.png */
+html, body {
+	height: 100%;
+}
+
+body {
+	background-image: url('/wood.png');
+	background-size: cover;
+	background-repeat: no-repeat;
+	background-position: center center;
+	background-attachment: fixed;
+	/* subtle fallback color */
+	background-color: #f3efe8;
+}
+
+/* Make main app container slightly translucent so wood shows through */
+.app-bg-overlay {
+	background-color: rgba(255,255,255,0.85);
+}
