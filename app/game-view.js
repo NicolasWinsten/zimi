@@ -12,25 +12,40 @@ import { currentDateSeed, sample } from "app/utils";
 import { submitDailyScore } from "./lib/db/db";
 
 // possibly add functionality to generate more colors if needed (for bigger game boards)
-const matchColors = ['bg-green-300', 'bg-red-600', 'bg-teal-300', 'bg-orange-300', 'bg-pink-300', 'bg-red-300', 'bg-indigo-300', 'bg-amber-300'];
+const matchColors = ['border-green-300', 'border-red-600', 'border-teal-300', 'border-orange-300', 'border-pink-300', 'border-red-300', 'border-indigo-300', 'border-amber-300'];
 
-const defaultTileColor = 'bg-white';
-
-function HanziTile({ character, handleClick, selected, color }) {
-  const bwidth = selected ? 'border-4' : 'border-1';
-  const weight = selected ? 'font-bold' : 'font-normal';
-  const bgColor = color ? color : defaultTileColor;
-  const classes = `${bwidth} ${weight} ${bgColor} p-4 text-4xl flex items-center justify-center hover:scale-105 hover:border-4 hover:font-bold`;
+function HanziTile({ character, handleClick, selected, matchColor}) {
+  const scale = selected ? 'scale-120' : 'scale-100';
+  const borderColor = selected ? 'border-amber-900' : 'border-amber-800';
+  const shadowClass = selected ? 'shadow-lg' : 'shadow-md';
+  const matchColorClass = `${matchColor}`
+  const isMatched = !!matchColor;
+  
+  const classes = `${scale} ${borderColor} ${shadowClass}
+    relative w-20 h-20 rounded-lg border-4
+    flex items-center justify-center text-3xl
+    transition-all duration-200
+    hover:scale-130 hover:shadow-lg hover:border-amber-700
+    active:translate-y-1 active:shadow-sm
+    cursor-pointer
+    bg-gradient-to-br from-white via-gray-50 to-gray-200
+    border-t-4 border-l-4 border-b-2 border-r-2
+    before:absolute before:inset-0 before:rounded-lg before:bg-gradient-to-br before:from-white before:to-transparent before:opacity-40 before:pointer-events-none`;
   
   return (
     <button className={classes} onClick={handleClick}>
+      {isMatched && (
+        <div className={`absolute inset-0 flex items-center justify-center pointer-events-none`}>
+          <div className={`w-12 h-12 border-4 ${matchColorClass} rounded-full`}></div>
+        </div>
+      )}
       {character}
     </button>
   )
 }
 
 const initialGridState = (characters) => ({
-  tileStates: characters.map(c => ({ match: null, color: defaultTileColor })),
+  tileStates: characters.map(c => ({ match: null, color: null })),
   remainingColors: [...matchColors],
   selectedTile: null,
   completed: false,
@@ -60,9 +75,9 @@ function gridReducer(state, action) {
       const color = state.tileStates[tile1].color;
       return produce(state, draft => {
         draft.tileStates[tile1].match = null
-        draft.tileStates[tile1].color = defaultTileColor;
+        draft.tileStates[tile1].color = null;
         draft.tileStates[tile2].match = null;
-        draft.tileStates[tile2].color = defaultTileColor;
+        draft.tileStates[tile2].color = null;
         draft.remainingColors.unshift(color);
       });
     }
@@ -110,8 +125,10 @@ function HanziGrid({ characters, onFinish }) {
   // I use the index as the key for character tiles here but allegedly you shouldn't do that.
   // it may cause bugs if the tiles are rearranged or removed.
   return (
-    <div className={MaShanZheng.className + " grid grid-cols-4 gap-4"}>
-      { characters.map((char, index) => <HanziTile key={char + index} color={tileStates[index].color} selected={index == selectedTile} character={char} handleClick={() => handleTileClick(index)}/>) }
+    <div className={`${MaShanZheng.className} flex justify-center`}>
+      <div className="grid grid-cols-4 gap-1 w-fit">
+        { characters.map((char, index) => <HanziTile key={char + index} matchColor={tileStates[index].color} selected={index == selectedTile} character={char} handleClick={() => handleTileClick(index)}/>) }
+      </div>
     </div>
     
   )
