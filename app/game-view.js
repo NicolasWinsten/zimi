@@ -94,17 +94,19 @@ function gridReducer(state, action) {
     }
     
     case 'shake': {
-      const [tile1, tile2] = action.tiles;
+      // const [tile1, tile2] = action.tiles;
       return produce(state, draft => {
-        draft.tileStates[tile1].shaking = true;
-        draft.tileStates[tile2].shaking = true;
+        action.tiles.forEach(t => {
+          draft.tileStates[t].shaking = true;
+        });
       });
     }
     case 'clear-shake': {
-      const [tile1, tile2] = action.tiles;  
+      // const [tile1, tile2] = action.tiles;  
       return produce(state, draft => {
-        draft.tileStates[tile1].shaking = false;
-        draft.tileStates[tile2].shaking = false;
+        action.tiles.forEach(t => {
+          draft.tileStates[t].shaking = false;
+        })
       });
     }
     
@@ -123,9 +125,18 @@ function gridReducer(state, action) {
 function HanziGrid({ characters, onFinish }) {
   const [{tileStates, selectedTile, remainingColors, completed, strikes}, dispatch] = useReducer(gridReducer, initialGridState(characters));
 
+  function failAnimation() {
+    let tiles = tileStates.map((t, i) => i);
+    dispatch({ type: 'shake', tiles });
+    setTimeout(() => {
+      dispatch({ type: 'clear-shake', tiles });
+    }, 500);
+  }
+
   // When the user finishes the game, submit a score (or failure if 3 strikes)
   useEffect(() => {
     if (strikes === 3 || completed) onFinish(completed)
+    if (strikes === 3) failAnimation();
   }, [strikes, completed]);
 
   function handleTileClick(index) {
@@ -162,9 +173,21 @@ function HanziGrid({ characters, onFinish }) {
   // I use the index as the key for character tiles here but allegedly you shouldn't do that.
   // it may cause bugs if the tiles are rearranged or removed.
   return (
-    <div className={`${MaShanZheng.className} flex justify-center`}>
+    <div className={`${MaShanZheng.className} flex flex-col items-center justify-center gap-4`}>
       <div className="grid grid-cols-4 gap-1 w-fit">
         { characters.map((char, index) => <HanziTile key={char + index} matchColor={tileStates[index].color} selected={index == selectedTile} shaking={tileStates[index].shaking} flashing={tileStates[index].flashing} character={char} handleClick={() => handleTileClick(index)}/>) }
+      </div>
+      <div className="flex gap-2 h-8">
+        {[1,2,3].map(i => (
+          <div
+            key={i}
+            className={`w-8 h-8 flex items-center justify-center text-2xl font-extrabold ${
+              i <= strikes ? 'text-red-600' : 'text-gray-300'
+            }`}
+          >
+            ✕
+          </div>
+        ))}
       </div>
     </div>
     
