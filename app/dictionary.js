@@ -9,7 +9,7 @@ import Dictionary from 'public/HSK词典.json';
 
 console.log("loading dictionary...");
 const dictionary = Dictionary.filter(entry => entry.simplified.length == 2)
-  .filter(({level}) => level.includes('old-3'))
+  // .filter(({level}) => level.includes('old-3'))
 
 const dictionarySet = new Set(dictionary.map(entry => entry.simplified))
 

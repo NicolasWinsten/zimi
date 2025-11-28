@@ -2,10 +2,21 @@ import GameView from "app/game-view";
 import { getTodaysWords } from "app/dictionary"; 
 import { currentDateSeed } from "app/utils";
 import DailyTimer from "app/daily-timer";
-import SignInButton from "app/signin-button";
+import { NotoSerifChinese } from "app/ui/fonts";
+import SignInButton from "app/usersession-button";
 
-function Header({ title }) {
-  return <h1>{title ? title : 'Default title'}</h1>;
+function ZimiBanner() {
+return (
+  <header>
+    <div className="flex items-center justify-center py-4">
+      <div className={`${NotoSerifChinese.className} flex items-center gap-3`}>
+        <h1 className="text-3xl font-bold text-gray-800 underline">ZiMi 字谜</h1>
+        <SignInButton />
+      </div>
+    </div>
+  </header>
+)
+
 }
 
 export default async function Page() {
@@ -16,10 +27,9 @@ export default async function Page() {
 
   return (
       <div>
-        <Header title="ZiMi字谜!" />
+        <ZimiBanner />
         <DailyTimer />
         <GameView words={todaysWords} />
-        <SignInButton />
       </div>
   );
 }
