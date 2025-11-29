@@ -4,37 +4,39 @@
 
 'use client';
 import { useReducer, useEffect } from "react";
-import { isValidWord } from "./dictionary";
+import { isValidWord } from "../lib/dictionary";
 import { produce } from "immer";
 import { useStopwatch } from "react-timer-hook";
-import { MaShanZheng } from "./ui/fonts";
-import { currentDateSeed, sample } from "app/utils";
-import { submitDailyScore } from "./lib/db/db";
+import { MaShanZheng } from "./fonts";
+import { currentDateSeed, sample } from "app/lib/utils";
+import { submitDailyScore } from "../lib/db/db";
 
 // possibly add functionality to generate more colors if needed (for bigger game boards)
 const matchColors = ['border-green-300', 'border-red-600', 'border-teal-300', 'border-orange-300', 'border-pink-300', 'border-red-300', 'border-indigo-300', 'border-amber-300'];
 
 function HanziTile({ character, handleClick, selected, matchColor, shaking}) {
   const selectedClass = selected ? 'scale-120 z-1' : 'scale-100';
-  const borderColor = selected ? 'border-amber-900' : 'border-amber-800';
   const shadowClass = selected ? 'shadow-lg' : 'shadow-md';
   const matchColorClass = `${matchColor}`
   const isMatched = !!matchColor;
   const shakeClass = shaking ? 'tile-shake' : '';
   
-  const classes = `${selectedClass} ${borderColor} ${shadowClass} ${shakeClass}
-    relative w-20 h-20 rounded-lg border-4
+  const classes = `${selectedClass} ${shadowClass} ${shakeClass}
+    relative w-20 h-25 rounded-lg border-4
     flex items-center justify-center text-3xl
     transition-all duration-200
-    hover:scale-130 hover:shadow-lg hover:border-amber-700 hover:z-1
+    hover:scale-130 hover:shadow-lg/50 hover:z-1
     active:translate-y-1 active:shadow-sm
     cursor-pointer
-    bg-gradient-to-br from-white via-gray-50 to-gray-200
-    border-t-4 border-l-4 border-b-2 border-r-2
-    before:absolute before:inset-0 before:rounded-lg before:bg-gradient-to-br before:from-white before:to-transparent before:opacity-40 before:pointer-events-none`;
+    border-t-4 border-l-4 border-b-0 border-r-0`;
+  // tile face color and trim (border) color applied via inline style to use exact hex values
+  const tileStyle = {
+    borderColor: '#28BCE6', // mahjong tile trim
+    background: '#E7E5EF' // tile face
+  };
   
   return (
-    <button className={classes} onClick={handleClick}>
+    <button className={classes} style={tileStyle} onClick={handleClick}>
       {isMatched && (
         <div className={`absolute inset-0 flex items-center justify-center pointer-events-none`}>
           <div className={`w-12 h-12 border-4 ${matchColorClass} rounded-full`}></div>

@@ -6,13 +6,7 @@ html, body {
 }
 
 body {
-	background-image: url('/wood.png');
-	background-size: cover;
-	background-repeat: no-repeat;
-	background-position: center center;
-	background-attachment: fixed;
-	/* subtle fallback color */
-	background-color: #f3efe8;
+	background-color: #00A160;
 }
 
 /* Make main app container slightly translucent so wood shows through */

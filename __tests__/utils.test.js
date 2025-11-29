@@ -1,4 +1,4 @@
-import { sample, currentDateSeed } from "../app/utils";
+import { sample, currentDateSeed } from "../app/lib/utils";
 
 test('sample nothing', () => {
   expect(sample(0, [1,2,3,4])).toEqual([]);

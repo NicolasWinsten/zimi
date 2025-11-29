@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { useEffect } from "react"
 
-export default function SignInButton() {
+function SignInButton() {
   const { data: session, status } = useSession()
   const router = useRouter()
 

@@ -1,9 +1,8 @@
-import GameView from "app/game-view";
-import { getTodaysWords } from "app/dictionary"; 
-import { currentDateSeed } from "app/utils";
-import DailyTimer from "app/daily-timer";
+import GameView from "app/ui/game-view";
+import { getTodaysWords } from "app/lib/dictionary"; 
+import { currentDateSeed } from "app/lib/utils";
 import { NotoSerifChinese } from "app/ui/fonts";
-import SignInButton from "app/usersession-button";
+import SignInButton from "app/ui/usersession-button";
 
 function ZimiBanner() {
 return (
