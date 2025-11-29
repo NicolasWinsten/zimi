@@ -122,7 +122,7 @@ function gridReducer(state, action) {
   }
 }
 
-function HanziGrid({ characters, onFinish }) {
+function HanziGrid({ characters, onFinish, stopWatch }) {
   const [{tileStates, selectedTile, remainingColors, completed, strikes}, dispatch] = useReducer(gridReducer, initialGridState(characters));
 
   function failAnimation() {
@@ -177,17 +177,26 @@ function HanziGrid({ characters, onFinish }) {
       <div className="grid grid-cols-4 gap-1 w-fit">
         { characters.map((char, index) => <HanziTile key={char + index} matchColor={tileStates[index].color} selected={index == selectedTile} shaking={tileStates[index].shaking} flashing={tileStates[index].flashing} character={char} handleClick={() => handleTileClick(index)}/>) }
       </div>
-      <div className="flex gap-2 h-8">
-        {[1,2,3].map(i => (
-          <div
-            key={i}
-            className={`w-8 h-8 flex items-center justify-center text-2xl font-extrabold ${
-              i <= strikes ? 'text-red-600' : 'text-gray-300'
-            }`}
-          >
-            ✕
+      <div className="flex gap-4 items-center justify-center h-8">
+        <div className="flex gap-2">
+          {[1,2,3].map(i => (
+            <div
+              key={i}
+              className={`w-8 h-8 flex items-center justify-center text-2xl font-extrabold ${
+                i <= strikes ? 'text-red-600' : 'text-gray-300'
+              }`}
+            >
+              ✕
+            </div>
+          ))}
+        </div>
+        <div className="bg-gradient-to-br from-gray-800 to-gray-900 text-white px-3 py-1 rounded shadow border border-gray-700">
+          <div className="text-lg font-bold font-mono tracking-wider">
+            <span>{String(stopWatch.totalSeconds).padStart(2, '0')}</span>
+            <span className="animate-pulse">:</span>
+            <span>{String(Math.floor(stopWatch.milliseconds / 10)).padStart(2, '0')}</span>
           </div>
-        ))}
+        </div>
       </div>
     </div>
     
@@ -207,9 +216,8 @@ export default function GameView({ words }) {
   }
 
   return (
-    <div>
-    <span>{stopWatch.totalSeconds}</span>:<span>{stopWatch.milliseconds}</span>
-      <HanziGrid characters={shuffledChars} onFinish={onFinish} />
+    <div className="flex items-center justify-center">
+      <HanziGrid characters={shuffledChars} onFinish={onFinish} stopWatch={stopWatch} />
     </div>
   )
 }
