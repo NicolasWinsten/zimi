@@ -203,6 +203,7 @@ function HanziGrid({ characters, onFinish, stopWatch }) {
   )
 }
 
+// TODO pass words and shuffled characters in as props to prevent re-shuffling on each render
 export default function GameView({ words }) {
   const todaysChars = words.flatMap(word => Array.from(word))
   const shuffledChars = sample(todaysChars.length, todaysChars, currentDateSeed())
@@ -211,7 +212,6 @@ export default function GameView({ words }) {
   function onFinish(completed) {
     stopWatch.pause();
     console.log(`Game finished in ${stopWatch.totalSeconds} seconds, and ${stopWatch.milliseconds} milliseconds!`);
-    
     submitDailyScore(completed ? stopWatch.totalSeconds * 1000 + stopWatch.milliseconds : null).then(console.log);
   }
 

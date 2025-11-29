@@ -28,7 +28,6 @@ export default async function Page() {
   return (
       <div>
         <ZimiBanner />
-        <DailyTimer />
         <GameView words={todaysWords} />
       </div>
   );

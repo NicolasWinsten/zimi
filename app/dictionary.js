@@ -20,8 +20,9 @@ const dictionarySet = new Set(dictionary.map(entry => entry.simplified))
  * @returns {Array} array of selected words
  */
 function getTodaysWords(num, level) {
-  let levels = ['old-1', 'new-1', 'old-2', 'new-2', 'old-3', 'new-3']
-  let words = sample(num, dictionary, currentDateSeed())
+  let levels = new Set(['old-1', 'new-1', 'old-2', 'new-2', 'old-3', 'new-3'])
+  const isEasy = word => word.level.find(lv => levels.has(lv))
+  let words = sample(num, dictionary.filter(isEasy), currentDateSeed())
   return words.map(word => word.simplified)
 }
 
