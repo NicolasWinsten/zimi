@@ -6,20 +6,11 @@ import postgres from 'postgres';
 
 const sql = postgres(process.env.POSTGRES_URL, { ssl: 'require' });
 
-async function getUser(id) {
-  const [user] = await sql`
-    SELECT *
-    FROM users
-    WHERE id = ${id}
-  `;
-  return user;
-}
-
 export async function getTopScores(limit = 10) {
   const scores = await sql`
-    SELECT user_id, milliseconds
-    FROM daily_scores
-    WHERE date = CURRENT_DATE
+    SELECT name, milliseconds
+    FROM daily_scores join users on user_id = id
+    WHERE date = CURRENT_DATE and milliseconds IS NOT NULL
     ORDER BY milliseconds
     LIMIT ${limit}
   `;

@@ -2,10 +2,11 @@
 import React from 'react';
 import HanziTile from './hanzi-tile';
 
+
 export default function HowToBox({ onStart }) {
   return (
-    <div className="fixed inset-0 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-2xl p-8 max-w-md mx-4 border-4 border-amber-700">
+    <div className="fixed left-0 right-0 top-16 flex items-start justify-center z-50 pointer-events-none p-6">
+      <div className="bg-white rounded-lg shadow-2xl p-8 max-w-md mx-4 border-4 border-purple-500 pointer-events-auto">
         <h2 className="text-2xl font-bold text-gray-800 mb-4 text-center">How to Play</h2>
         <div className="space-y-3 text-gray-700 mb-6">
           <div className="flex items-start gap-2">

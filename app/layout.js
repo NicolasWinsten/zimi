@@ -1,17 +1,35 @@
 import 'app/ui/globals.css';
 import Providers from 'app/providers'
 import { MaShanZheng, NotoSerifChinese } from 'app/ui/fonts';
+import SignInButton from 'app/ui/usersession-button';
+import { mahjongFeltPurple, mahjongTileFace } from 'app/ui/styles';
+
+const styleClass = {
+  backgroundColor: mahjongTileFace,
+}
 
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body>
         <div className={`${NotoSerifChinese.className} flex flex-col min-h-screen`}>
+          <Providers>
+            <header style={styleClass} className="shadow border-b-4 border-purple-500">
+              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div className="flex items-center justify-between h-16">
+                  <div className="flex items-center gap-3">
+                    <h1 className="text-2xl font-bold">ZiMi 字谜!</h1>
+                  </div>
+                  <SignInButton />
+                </div>
+              </div>
+            </header>
 
-          {/* Main content */}
-          <main className="flex-1">
-            <Providers>{children}</Providers>
-          </main>
+            {/* Main content */}
+            <main className="flex-1">
+              {children}
+            </main>
+          </Providers>
         </div>
       </body>
     </html>

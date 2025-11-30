@@ -9,9 +9,9 @@ import HanziTile from "./hanzi-tile";
 import { isValidWord } from "../lib/dictionary";
 import { produce } from "immer";
 import { useStopwatch } from "react-timer-hook";
-import { MaShanZheng } from "./fonts";
+import PlayerList from "app/ui/player-list";
 import { currentDateSeed, sample } from "app/lib/utils";
-import { submitDailyScore } from "../lib/db/db";
+import { getTopScores, submitDailyScore } from "../lib/db/db";
 
 // possibly add functionality to generate more colors if needed (for bigger game boards)
 const matchColors = ['border-green-300', 'border-red-600', 'border-teal-300', 'border-orange-300', 'border-pink-300', 'border-red-300', 'border-indigo-300', 'border-amber-300'];
@@ -184,6 +184,7 @@ function HanziGrid({ characters, onFinish, stopWatch }) {
 // TODO pass words and shuffled characters in as props to prevent re-shuffling on each render
 export default function GameView({ words }) {
   const [showHowTo, setShowHowTo] = useState(true);
+  const [leaderboard, setLeaderboard] = useState([]);
   const todaysChars = words.flatMap(word => Array.from(word))
   const shuffledChars = sample(todaysChars.length, todaysChars, currentDateSeed())
   const stopWatch = useStopwatch({ autoStart: false, interval: 20 });
@@ -192,6 +193,7 @@ export default function GameView({ words }) {
     stopWatch.pause();
     console.log(`Game finished in ${stopWatch.totalSeconds} seconds, and ${stopWatch.milliseconds} milliseconds!`);
     submitDailyScore(completed ? stopWatch.totalSeconds * 1000 + stopWatch.milliseconds : null).then(console.log);
+    getTopScores().then(setLeaderboard);
   }
 
   function begin() {
@@ -204,6 +206,7 @@ export default function GameView({ words }) {
       {showHowTo && <HowToBox onStart={begin} />}
     <div className={`flex items-center justify-center ${showHowTo ? 'blur-sm pointer-events-none select-none' : ''}`}>
       <HanziGrid characters={shuffledChars} onFinish={onFinish} stopWatch={stopWatch} />
+      <PlayerList players={leaderboard} dataFn={player => player.milliseconds} />
     </div>
     </>
   )
