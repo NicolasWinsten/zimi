@@ -3,7 +3,9 @@
  */
 
 'use client';
-import { useReducer, useEffect } from "react";
+import { useReducer, useEffect, useState } from "react";
+import HowToBox from './how-to-box';
+import HanziTile from "./hanzi-tile";
 import { isValidWord } from "../lib/dictionary";
 import { produce } from "immer";
 import { useStopwatch } from "react-timer-hook";
@@ -13,44 +15,6 @@ import { submitDailyScore } from "../lib/db/db";
 
 // possibly add functionality to generate more colors if needed (for bigger game boards)
 const matchColors = ['border-green-300', 'border-red-600', 'border-teal-300', 'border-orange-300', 'border-pink-300', 'border-red-300', 'border-indigo-300', 'border-amber-300'];
-
-function HanziTile({ character, handleClick, selected, matchColor, shaking}) {
-  const selectedClass = selected ? 'scale-120 z-1' : 'scale-100';
-  const shadowClass = selected ? 'shadow-lg' : 'shadow-md';
-  const matchColorClass = `${matchColor}`
-  const isMatched = !!matchColor;
-  const shakeClass = shaking ? 'tile-shake' : '';
-  
-  const classes = `${selectedClass} ${shadowClass} ${shakeClass}
-    relative w-20 h-25 rounded-lg border-4
-    flex items-center justify-center text-3xl
-    transition-all duration-200
-    hover:scale-130 hover:shadow-lg/50 hover:z-1
-    active:translate-y-1 active:shadow-sm
-    cursor-pointer
-    border-t-4 border-l-4 border-b-0 border-r-0`;
-  // tile face color and trim (border) color applied via inline style to use exact hex values
-  const tileStyle = {
-    borderColor: '#28BCE6', // mahjong tile trim
-    background: '#E7E5EF' // tile face
-  };
-  
-  return (
-    <button className={classes} style={tileStyle} onClick={handleClick}>
-      {isMatched && (
-        <div className={`absolute inset-0 flex items-center justify-center pointer-events-none`}>
-          <div className={`w-12 h-12 border-4 ${matchColorClass} rounded-full`}></div>
-        </div>
-      )}
-      {shaking && ( // when the tile is shaking, show a red flash overlay
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <div className="w-full h-full rounded-lg tile-flash-overlay" />
-        </div>
-      )}
-      {character}
-    </button>
-  )
-}
 
 const initialGridState = (characters) => ({
   tileStates: characters.map(c => ({ match: null, color: null, shaking: false})),
@@ -175,9 +139,19 @@ function HanziGrid({ characters, onFinish, stopWatch }) {
   // I use the index as the key for character tiles here but allegedly you shouldn't do that.
   // it may cause bugs if the tiles are rearranged or removed.
   return (
-    <div className={`${MaShanZheng.className} flex flex-col items-center justify-center gap-4`}>
+    <div className={`flex flex-col items-center justify-center gap-4`}>
       <div className="grid grid-cols-4 gap-1 w-fit">
-        { characters.map((char, index) => <HanziTile key={char + index} matchColor={tileStates[index].color} selected={index == selectedTile} shaking={tileStates[index].shaking} flashing={tileStates[index].flashing} character={char} handleClick={() => handleTileClick(index)}/>) }
+        { characters.map((char, index) =>
+          <HanziTile
+            key={char + index}
+            matchColor={tileStates[index].color}
+            selected={index == selectedTile}
+            shaking={tileStates[index].shaking}
+            character={char}
+            handleClick={() => handleTileClick(index)}
+            inactive={completed || strikes === 3}
+            />)
+        }
       </div>
       <div className="flex gap-4 items-center justify-center h-8">
         <div className="flex gap-2">
@@ -205,11 +179,14 @@ function HanziGrid({ characters, onFinish, stopWatch }) {
   )
 }
 
+
+
 // TODO pass words and shuffled characters in as props to prevent re-shuffling on each render
 export default function GameView({ words }) {
+  const [showHowTo, setShowHowTo] = useState(true);
   const todaysChars = words.flatMap(word => Array.from(word))
   const shuffledChars = sample(todaysChars.length, todaysChars, currentDateSeed())
-  const stopWatch = useStopwatch({ autoStart: true, interval: 20 });
+  const stopWatch = useStopwatch({ autoStart: false, interval: 20 });
 
   function onFinish(completed) {
     stopWatch.pause();
@@ -217,9 +194,17 @@ export default function GameView({ words }) {
     submitDailyScore(completed ? stopWatch.totalSeconds * 1000 + stopWatch.milliseconds : null).then(console.log);
   }
 
+  function begin() {
+    setShowHowTo(false);
+    stopWatch.start();
+  }
+
   return (
-    <div className="flex items-center justify-center">
+    <>
+      {showHowTo && <HowToBox onStart={begin} />}
+    <div className={`flex items-center justify-center ${showHowTo ? 'blur-sm pointer-events-none select-none' : ''}`}>
       <HanziGrid characters={shuffledChars} onFinish={onFinish} stopWatch={stopWatch} />
     </div>
+    </>
   )
 }
