@@ -203,7 +203,7 @@ export default function GameView({ words }) {
 
   return (
     <>
-      {showHowTo && <HowToBox onStart={begin} />}
+      {showHowTo && <HowToBox onClose={begin} open={showHowTo}/>}
     <div className={`flex items-center justify-center ${showHowTo ? 'blur-sm pointer-events-none select-none' : ''}`}>
       <HanziGrid characters={shuffledChars} onFinish={onFinish} stopWatch={stopWatch} />
       <PlayerList players={leaderboard} dataFn={player => player.milliseconds} />
