@@ -192,7 +192,7 @@ export default function GameView({ words }) {
   function onFinish(completed) {
     stopWatch.pause();
     console.log(`Game finished in ${stopWatch.totalSeconds} seconds, and ${stopWatch.milliseconds} milliseconds!`);
-    submitDailyScore(completed ? stopWatch.totalSeconds * 1000 + stopWatch.milliseconds : null).then(console.log);
+    submitDailyScore(completed ? stopWatch.totalSeconds * 1000 + stopWatch.milliseconds : null)
     getTopScores().then(setLeaderboard);
   }
 

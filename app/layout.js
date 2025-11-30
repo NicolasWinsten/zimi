@@ -1,7 +1,7 @@
 import 'app/ui/globals.css';
 import Providers from 'app/providers'
 import { MaShanZheng, NotoSerifChinese } from 'app/ui/fonts';
-import SignInButton from 'app/ui/usersession-button';
+import UserMenu from 'app/ui/user-menu';
 import { mahjongFeltPurple, mahjongTileFace } from 'app/ui/styles';
 
 const styleClass = {
@@ -20,7 +20,9 @@ export default function RootLayout({ children }) {
                   <div className="flex items-center gap-3">
                     <h1 className="text-2xl font-bold">ZiMi 字谜!</h1>
                   </div>
-                  <SignInButton />
+                  <div className="flex items-center gap-4">
+                    <UserMenu />
+                  </div>
                 </div>
               </div>
             </header>
