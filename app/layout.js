@@ -27,7 +27,7 @@ export default function RootLayout({ children }) {
                   </div>
                   <div className="flex items-center gap-4">
                     <HelpButton />
-                    <UserMenu />
+                    {/* <UserMenu /> */}
                   </div>
                 </div>
               </div>

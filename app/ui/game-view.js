@@ -270,7 +270,7 @@ export default function GameView({ words, shuffledChars, dateSeed}) {
   function onFinish(completed) {
     stopWatch.pause();
     console.log(`Game finished in ${getMilliseconds()} milliseconds!`);
-    submitDailyScore(completed ? getMilliseconds() : null)
+    // submitDailyScore(completed ? getMilliseconds() : null)
     // getTopScores().then(setLeaderboard);
   }
 
