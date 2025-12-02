@@ -3,6 +3,7 @@ import Providers from 'app/providers'
 import { MaShanZheng, NotoSerifChinese } from 'app/ui/fonts';
 import UserMenu from 'app/ui/user-menu';
 import HelpButton from 'app/ui/help-button';
+import DailyTimer from 'app/ui/daily-timer';
 import { mahjongFeltPurple, mahjongTileFace } from 'app/ui/styles';
 
 const styleClass = {
@@ -26,6 +27,7 @@ export default function RootLayout({ children }) {
                     <h1 className="text-2xl font-bold">ZiMi 字谜!</h1>
                   </div>
                   <div className="flex items-center gap-4">
+                    <DailyTimer />
                     <HelpButton />
                     {/* <UserMenu /> */}
                   </div>

@@ -44,9 +44,4 @@ body {
 	}
 }
 
-@media (hover: none) and (pointer: coarse) {
-	/* Ensure tiles revert to normal size after tap on touch devices */
-	.tile-hover {
-		transform: none !important;
-	}
-}
+

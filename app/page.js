@@ -14,7 +14,7 @@ export default async function Page() {
 
   return (
       <div>
-        <GameView words={todaysWords} shuffledChars={shuffledChars} dateSeed={dateSeed} suppressHydrationWarning={true}/>
+        <GameView words={todaysWords} shuffledChars={shuffledChars} dateSeed={dateSeed} />
       </div>
   );
 }

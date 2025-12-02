@@ -14,7 +14,7 @@ import { getTopScores, submitDailyScore } from "../lib/db/db";
 import { currentDateSeed } from "app/lib/utils";
 import { Dialog, DialogTitle, DialogContent, DialogActions, Button } from '@mui/material';
 import { shareOnMobile } from "react-mobile-share";
-
+import WordList from "./word-list";
 // possibly add functionality to generate more colors if needed (for bigger game boards)
 const matchColors = ['border-green-300', 'border-red-600', 'border-teal-300', 'border-orange-300', 'border-pink-300', 'border-red-300', 'border-indigo-300', 'border-amber-300'];
 
@@ -183,6 +183,7 @@ function HanziGrid({ characters, onGameStateChange, initialState }) {
   );
 
   const { tileStates, selectedTile, remainingColors, completed, strikes } = gameState;
+  const prevStrikesRef = useRef(strikes);
 
   // Save game state to localStorage whenever it changes
   useEffect(() => {
@@ -190,7 +191,6 @@ function HanziGrid({ characters, onGameStateChange, initialState }) {
   }, [tileStates, strikes]);
 
 
-  // TODO this still runs when a failed game is initialized from localStorage
   function failAnimation() {
     let tiles = tileStates.map((t, i) => i);
     dispatch({ type: 'shake', tiles });
@@ -199,9 +199,12 @@ function HanziGrid({ characters, onGameStateChange, initialState }) {
     }, 500);
   }
 
-  // When the user finishes the game, submit a score (or failure if 3 strikes)
+  // When the user gets their third strike, play the fail animation
   useEffect(() => {
-    if (strikes === 3) failAnimation();
+    if (strikes === 3 && prevStrikesRef.current < 3) {
+      failAnimation();
+    }
+    prevStrikesRef.current = strikes;
   }, [strikes]);
 
   function handleTileClick(index) {
@@ -349,6 +352,7 @@ export default function GameView({ words, shuffledChars, dateSeed}) {
         </div>
         {/* <PlayerList players={leaderboard} dataFn={player => player.milliseconds} /> */}
       </div>
+      { gameIsFinished(currentGameState) && <WordList words={words} /> }
     </div>
   )
 }

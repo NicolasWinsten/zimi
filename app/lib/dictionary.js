@@ -11,7 +11,7 @@ console.log("loading dictionary...");
 const dictionary = Dictionary.filter(entry => entry.simplified.length == 2)
   // .filter(({level}) => level.includes('old-3'))
 
-const dictionarySet = new Set(dictionary.map(entry => entry.simplified))
+const dictionaryMap = new Map(dictionary.map(entry => [entry.simplified, entry]))
 
 /**
  * Randomly selects today's words from the dictionary (based on current date)
@@ -27,7 +27,11 @@ function getRandomWords(num, seed, level) {
 }
 
 function isValidWord(word) {
-  return dictionarySet.has(word)
+  return dictionaryMap.has(word)
 }
 
-export { getRandomWords, isValidWord }
+function getDictionaryEntry(word) {
+  return dictionaryMap.get(word);
+}
+
+export { getRandomWords, isValidWord, getDictionaryEntry }
