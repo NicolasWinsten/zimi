@@ -45,11 +45,7 @@ const makeShareableResultString = (gameState, milliseconds, dateSeed) => {
     return tileToEmoji(tile) + (isEndOfRow ? '\n' : '');
   }).join('');
 
-  return `
-  My Daily Zimi ${date.toDateString()}
-  ${grid}
-  ${'❌'.repeat(gameState.strikes)} ${gameState.strikes === 3 ? '😭' : timeStr }
-  `
+  return `My Daily Zimi\n${date.toDateString()}\n${grid}\n${'❌'.repeat(gameState.strikes)} ${gameState.strikes === 3 ? '😭' : timeStr }`
 }
 
 function saveLocalState(gameState, milliseconds, dateSeed) {
