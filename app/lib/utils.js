@@ -5,7 +5,8 @@ import seedrandom from "seedrandom"
  */
 function currentDateSeed() {
   const now = new Date()
-  return `${now.getUTCFullYear()}-${now.getUTCMonth()}-${now.getUTCDate()}`
+  now.setUTCHours(0, 0, 0, 0)
+  return now.toUTCString()
 }
 
 /**

@@ -13,6 +13,7 @@ import PlayerList from "app/ui/player-list";
 import { getTopScores, submitDailyScore } from "../lib/db/db";
 import { currentDateSeed } from "app/lib/utils";
 import { Dialog, DialogTitle, DialogContent, DialogActions, Button } from '@mui/material';
+import { shareOnMobile } from "react-mobile-share";
 
 // possibly add functionality to generate more colors if needed (for bigger game boards)
 const matchColors = ['border-green-300', 'border-red-600', 'border-teal-300', 'border-orange-300', 'border-pink-300', 'border-red-300', 'border-indigo-300', 'border-amber-300'];
@@ -24,6 +25,32 @@ const initialGridState = (characters) => ({
   completed: false,
   strikes: 0,
 });
+
+const gameIsFinished = (gameState) => {
+  return gameState.completed || gameState.strikes == 3;
+}
+
+const makeShareableResultString = (gameState, milliseconds, dateSeed) => {
+  const totalSeconds = Math.floor(milliseconds / 1000);
+  const mins = Math.floor(totalSeconds / 60);
+  const secs = totalSeconds % 60;
+  const ms = milliseconds % 1000;
+  const timeStr = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}:${String(ms).padStart(3, '0')}`
+
+  const tileToEmoji = (tile) => tile.match !== null ? '🟩' : '🟥';
+  const date = new Date(dateSeed);
+
+  const grid = gameState.tileStates.map((tile, index) => {
+    const isEndOfRow = (index + 1) % 4 === 0;
+    return tileToEmoji(tile) + (isEndOfRow ? '\n' : '');
+  }).join('');
+
+  return `
+  My Daily Zimi ${date.toDateString()}
+  ${grid}
+  ${'❌'.repeat(gameState.strikes)} ${gameState.strikes === 3 ? '😭' : timeStr }
+  `
+}
 
 function saveLocalState(gameState, milliseconds, dateSeed) {
   console.log('Saving game state to localStorage...', gameState, milliseconds, dateSeed);
@@ -153,7 +180,7 @@ function gridReducer(state, action) {
   }
 }
 
-function HanziGrid({ characters, onFinish, onGameStateChange, initialState }) {
+function HanziGrid({ characters, onGameStateChange, initialState }) {
   const [gameState, dispatch] = useReducer(
     gridReducer, 
     initialState || initialGridState(characters)
@@ -166,6 +193,8 @@ function HanziGrid({ characters, onFinish, onGameStateChange, initialState }) {
     onGameStateChange(gameState);
   }, [tileStates, strikes]);
 
+
+  // TODO this still runs when a failed game is initialized from localStorage
   function failAnimation() {
     let tiles = tileStates.map((t, i) => i);
     dispatch({ type: 'shake', tiles });
@@ -176,9 +205,8 @@ function HanziGrid({ characters, onFinish, onGameStateChange, initialState }) {
 
   // When the user finishes the game, submit a score (or failure if 3 strikes)
   useEffect(() => {
-    if (strikes === 3 || completed) onFinish(completed)
     if (strikes === 3) failAnimation();
-  }, [strikes, completed]);
+  }, [strikes]);
 
   function handleTileClick(index) {
     if (completed || strikes == 3) return; // no action if game is completed
@@ -230,13 +258,12 @@ function HanziGrid({ characters, onFinish, onGameStateChange, initialState }) {
   );
 }
 
-// TODO pass words and shuffled characters in as props to prevent re-shuffling on each render
 export default function GameView({ words, shuffledChars, dateSeed}) {
-  const [{ currentGameState, initialMs}, setState] = useState(() => {
+  const [{ currentGameState, ms}, setState] = useState(() => {
     const savedGame = retrieveLocalState();
     return {
       currentGameState: savedGame ? savedGame.game : initialGridState(shuffledChars),
-      initialMs: savedGame ? savedGame.milliseconds : 0
+      ms: savedGame ? savedGame.milliseconds : 0
     };
   });
 
@@ -250,7 +277,7 @@ export default function GameView({ words, shuffledChars, dateSeed}) {
   const stopWatch = useStopwatch({ 
     autoStart: false, 
     interval: 20,
-    offsetTimestamp: new Date(Date.now() + initialMs)
+    offsetTimestamp: new Date(Date.now() + ms)
   });
 
   function getMilliseconds() {
@@ -265,20 +292,10 @@ export default function GameView({ words, shuffledChars, dateSeed}) {
     }
   }, [stopWatch, currentGameState]);
 
-  
-
-  function onFinish(completed) {
-    stopWatch.pause();
-    console.log(`Game finished in ${getMilliseconds()} milliseconds!`);
-    // submitDailyScore(completed ? getMilliseconds() : null)
-    // getTopScores().then(setLeaderboard);
-  }
-
-
   function resumeGame() {
     setShowResumeModal(false);
     setShowHowTo(false);
-    stopWatch.start();
+    if (!gameIsFinished(currentGameState)) stopWatch.start();
   }
 
   return (
@@ -286,16 +303,19 @@ export default function GameView({ words, shuffledChars, dateSeed}) {
       <HowToBox onClose={resumeGame} open={showHowTo}/>
       
       <Dialog open={showResumeModal} onClose={resumeGame}>
-        <DialogTitle>Resume Game?</DialogTitle>
+        <DialogTitle>Daily Zimi</DialogTitle>
         <DialogContent>
-          You have an in-progress game from today. Would you like to resume where you left off?
+        { gameIsFinished(currentGameState) ?
+          "You have a completed game from today. Come back tomorrow for a new zimi!" :
+          "You have an in-progress game from today. Resume where you left off?"
+        }
         </DialogContent>
         <DialogActions>
           {/* <Button onClick={startNewGame} color="secondary">
             Start New Game
           </Button> */}
           <Button onClick={resumeGame} color="primary" variant="contained">
-            Resume
+            Okay!
           </Button>
         </DialogActions>
       </Dialog>
@@ -304,11 +324,10 @@ export default function GameView({ words, shuffledChars, dateSeed}) {
         <div className="flex flex-col items-center justify-center gap-4">
           <HanziGrid 
             characters={shuffledChars} 
-            onFinish={onFinish} 
             onGameStateChange={gameState => {
-              setState({ currentGameState: gameState, totalMs: getMilliseconds() });
+              setState({ currentGameState: gameState, ms: getMilliseconds() });
               saveLocalState(gameState, getMilliseconds(), dateSeed);
-              // setCurrentStrikes(gameState.strikes);
+              if (gameIsFinished(gameState)) stopWatch.pause();
             }}
             initialState={currentGameState}
           />
@@ -316,6 +335,21 @@ export default function GameView({ words, shuffledChars, dateSeed}) {
             <StrikesIndicator strikes={currentGameState.strikes} />
             <TimerDisplay stopWatch={stopWatch} />
           </div>
+          { gameIsFinished(currentGameState) && (
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={() => shareOnMobile({
+                title: 'My Daily Zimi',
+                text: makeShareableResultString(currentGameState, getMilliseconds(), dateSeed),
+                url: "https://zimi-ten.vercel.app/"
+              }, console.error)
+              }
+              >
+                Share your results
+              </Button>
+          ) }
+            
         </div>
         {/* <PlayerList players={leaderboard} dataFn={player => player.milliseconds} /> */}
       </div>
