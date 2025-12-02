@@ -1,6 +1,6 @@
 "use client"
 import { SessionProvider } from "next-auth/react"
-import { CacheProvider } from '@emotion/react';
+// import { CacheProvider } from '@emotion/react';
 import { ThemeProvider } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import theme from './theme';
@@ -12,7 +12,7 @@ export default function Providers({ children }) {
     <SessionProvider>
       {/* <CacheProvider value={clientSideEmotionCache}> */}
         <ThemeProvider theme={theme}>
-          <CssBaseline />
+          {/* <CssBaseline /> */}
           {children}
         </ThemeProvider>
       {/* </CacheProvider> */}

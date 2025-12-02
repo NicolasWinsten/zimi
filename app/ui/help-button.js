@@ -11,14 +11,16 @@ export default function HelpButton() {
   const handleClose = () => setOpen(false);
 
   return (
-    <>
+    <div>
       <IconButton
         onClick={handleOpen}
         aria-label="help"
       >
         <HelpOutlineIcon fontSize="large" />
+        
       </IconButton>
       <HowToBox open={open} onClose={handleClose} />
-    </>
+    </div>
+      
   );
 }

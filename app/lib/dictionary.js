@@ -19,10 +19,10 @@ const dictionarySet = new Set(dictionary.map(entry => entry.simplified))
  * @param {number} level max HSK level (1-7)  
  * @returns {Array} array of selected words
  */
-function getTodaysWords(num, level) {
+function getRandomWords(num, seed, level) {
   let levels = new Set(['old-1', 'new-1', 'old-2', 'new-2', 'old-3', 'new-3'])
   const isEasy = word => word.level.find(lv => levels.has(lv))
-  let words = sample(num, dictionary.filter(isEasy), currentDateSeed())
+  let words = sample(num, dictionary.filter(isEasy), seed || currentDateSeed())
   return words.map(word => word.simplified)
 }
 
@@ -30,4 +30,4 @@ function isValidWord(word) {
   return dictionarySet.has(word)
 }
 
-export { getTodaysWords, isValidWord }
+export { getRandomWords, isValidWord }

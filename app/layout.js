@@ -14,7 +14,7 @@ export default function RootLayout({ children }) {
     <html lang="en">
       <head>
         {/* Emotion insertion point to control style order vs Tailwind */}
-        <meta name="emotion-insertion-point" content="" />
+        {/* <meta name="emotion-insertion-point" content="" /> */}
       </head>
       <body>
         <div className={`${NotoSerifChinese.className} flex flex-col min-h-screen`}>
