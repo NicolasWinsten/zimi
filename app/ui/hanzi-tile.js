@@ -13,7 +13,7 @@ function HanziTile({ character, handleClick, selected, matchColor, shaking, inac
     relative w-20 h-25 rounded-lg border-4
     flex items-center justify-center text-3xl
     transition-all duration-200
-    ${inactive ? '' : 'hover:scale-130 hover:shadow-lg/50 hover:z-1 active:translate-y-1 active:shadow-sm'}
+    ${inactive ? '' : 'tile-hover active:translate-y-1 active:shadow-sm'}
     cursor-pointer
     border-t-4 border-l-4 border-b-0 border-r-0`;
   // tile face color and trim (border) color applied via inline style to use exact hex values
