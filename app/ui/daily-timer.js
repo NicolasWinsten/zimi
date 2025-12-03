@@ -1,6 +1,7 @@
 'use client';
 
-import { useTimer } from 'react-timer-hook'; 
+import { useTimer } from 'react-timer-hook';
+import { Box, Typography } from '@mui/material';
 
 export default function DailyTimer({ onExpire }) {
   const expiryTimestamp = new Date();
@@ -20,17 +21,80 @@ export default function DailyTimer({ onExpire }) {
   } = useTimer({ expiryTimestamp, onExpire });
 
   return (
-    <div className="flex items-center gap-4" suppressHydrationWarning={true}>
-      <div className="text-xl font-bold mb-0.5">Next Daily</div>
-      <div className="bg-gradient-to-br from-purple-600 to-purple-800 text-white px-3 py-1.5 rounded-lg shadow-md border border-purple-400">
-        <div className="font-mono font-bold text-sm tracking-wider">
+    <Box 
+      sx={{ 
+        display: 'flex', 
+        alignItems: 'center', 
+        gap: 2 
+      }} 
+    >
+      <Typography 
+        variant="h6" 
+        sx={{ 
+          fontWeight: 'bold', 
+          mb: 0.0625 
+        }}
+      >
+        Next Daily
+      </Typography>
+      <Box 
+        sx={{ 
+          background: 'linear-gradient(to bottom right, #9333ea, #6b21a8)',
+          color: 'white',
+          px: 1.5,
+          py: 0.75,
+          borderRadius: 2,
+          boxShadow: 3,
+          border: '1px solid #c084fc'
+        }}
+      >
+        <Typography 
+          sx={{ 
+            fontFamily: 'monospace',
+            fontWeight: 'bold',
+            fontSize: '0.875rem',
+            letterSpacing: '0.05em'
+          }}
+        >
           {hours.toString().padStart(2, '0')}
-          <span className="animate-pulse mx-0.5">:</span>
+          <Box 
+            component="span" 
+            sx={{ 
+              mx: 0.0625,
+              animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+              '@keyframes pulse': {
+                '0%, 100%': {
+                  opacity: 1,
+                },
+                '50%': {
+                  opacity: 0.5,
+                },
+              },
+            }}
+          >
+            :
+          </Box>
           {minutes.toString().padStart(2, '0')}
-          <span className="animate-pulse mx-0.5">:</span>
+          <Box 
+            component="span" 
+            sx={{ 
+              mx: 0.0625,
+              animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+              '@keyframes pulse': {
+                '0%, 100%': {
+                  opacity: 1,
+                },
+                '50%': {
+                  opacity: 0.5,
+                },
+              },
+            }}
+          >
+            :
+          </Box>
           {seconds.toString().padStart(2, '0')}
-        </div>
-      </div>
-    </div>
+        </Typography>
+      </Box>
+    </Box>
   );
 }

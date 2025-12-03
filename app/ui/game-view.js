@@ -10,7 +10,7 @@ import { useStopwatch } from "react-timer-hook";
 import PlayerList from "app/ui/player-list";
 import { getTopScores, submitDailyScore } from "../lib/db/db";
 import { currentDateSeed } from "app/lib/utils";
-import { Dialog, DialogTitle, DialogContent, DialogActions, Button } from '@mui/material';
+import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Box, Typography } from '@mui/material';
 import { shareOnMobile } from "react-mobile-share";
 import WordList from "./word-list";
 
@@ -75,30 +75,69 @@ function retrieveLocalState() {
 
 function StrikesIndicator({ strikes }) {
   return (
-    <div className="flex gap-2">
+    <Box sx={{ display: 'flex', gap: 1 }}>
       {[1,2,3].map(i => (
-        <div
+        <Box
           key={i}
-          className={`w-8 h-8 flex items-center justify-center text-2xl font-extrabold ${
-            i <= strikes ? 'text-red-600' : 'text-gray-300'
-          }`}
+          sx={{
+            width: 32,
+            height: 32,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: '1.5rem',
+            fontWeight: 800,
+            color: i <= strikes ? '#dc2626' : '#d1d5db'
+          }}
         >
           ✕
-        </div>
+        </Box>
       ))}
-    </div>
+    </Box>
   );
 }
 
 function TimerDisplay({ stopWatch }) {
   return (
-    <div className="bg-gradient-to-br from-gray-800 to-gray-900 text-white px-3 py-1 rounded shadow border border-gray-700">
-      <div className="text-lg font-bold font-mono tracking-wider">
-        <span>{String(stopWatch.totalSeconds).padStart(2, '0')}</span>
-        <span className="animate-pulse">:</span>
-        <span>{String(Math.floor(stopWatch.milliseconds / 10)).padStart(2, '0')}</span>
-      </div>
-    </div>
+    <Box 
+      sx={{ 
+        background: 'linear-gradient(to bottom right, #1f2937, #111827)',
+        color: 'white',
+        px: 1.5,
+        py: 0.5,
+        borderRadius: 1,
+        boxShadow: 1,
+        border: '1px solid #374151'
+      }}
+    >
+      <Typography 
+        sx={{ 
+          fontSize: '1.125rem',
+          fontWeight: 'bold',
+          fontFamily: 'monospace',
+          letterSpacing: '0.05em'
+        }}
+      >
+        <Box component="span">{String(stopWatch.totalSeconds).padStart(2, '0')}</Box>
+        <Box 
+          component="span" 
+          sx={{ 
+            animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+            '@keyframes pulse': {
+              '0%, 100%': {
+                opacity: 1,
+              },
+              '50%': {
+                opacity: 0.5,
+              },
+            },
+          }}
+        >
+          :
+        </Box>
+        <Box component="span">{String(Math.floor(stopWatch.milliseconds / 10)).padStart(2, '0')}</Box>
+      </Typography>
+    </Box>
   );
 }
 
