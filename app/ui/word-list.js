@@ -30,7 +30,6 @@ export default function WordList({ words }) {
       {words.map((word, index) => {
         const entries = getDictionaryEntry(word)?.forms;
         if (!entries) return null;
-        const dongChineseUrl = `https://www.dong-chinese.com/dictionary/${encodeURIComponent(word)}`;
 
         return (
           <ListItem 

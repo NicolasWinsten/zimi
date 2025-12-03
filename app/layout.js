@@ -24,7 +24,7 @@ export default function RootLayout({ children }) {
               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex items-center justify-between h-16">
                   <div className="flex items-center gap-3">
-                    <h1 className="text-2xl font-bold">ZiMi 字谜!</h1>
+                    <h1 className="text-2xl font-bold">ZiMi <span className='text-nowrap'>字谜!</span></h1>
                   </div>
                   <div className="flex items-center gap-4">
                     <DailyTimer />
