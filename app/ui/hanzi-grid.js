@@ -80,37 +80,9 @@ export function gridReducer(state, action) {
   }
 }
 
-export default function HanziGrid({ state, dispatch}) {
-  // const [gameState, dispatch] = useReducer(
-  //   gridReducer, 
-  //   state
-  // );
-
+export default function HanziGrid({ state, dispatch }) {
   const { tileStates, selectedTile, remainingColors, completed, strikes } = state;
   const characters = tileStates.map(({char}) => char);
-  
-  const prevStrikesRef = useRef(strikes);
-
-  // Save game state to localStorage whenever it changes
-  // useEffect(() => {
-  //   onGameStateChange(gameState);
-  // }, [tileStates, strikes]);
-
-  function failAnimation() {
-    let tiles = tileStates.map((t, i) => i);
-    dispatch({ type: 'shake', tiles });
-    setTimeout(() => {
-      dispatch({ type: 'clear-shake', tiles });
-    }, 500);
-  }
-
-  // When the user gets their third strike, play the fail animation
-  useEffect(() => {
-    if (strikes === 3 && prevStrikesRef.current < 3) {
-      failAnimation();
-    }
-    prevStrikesRef.current = strikes;
-  }, [strikes]);
 
   function handleTileClick(index) {
     if (completed || strikes == 3) return; // no action if game is completed

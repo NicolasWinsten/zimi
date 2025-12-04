@@ -3,7 +3,7 @@
  */
 
 'use client';
-import { use, useEffect, useReducer, useState } from "react";
+import { useRef, useEffect, useReducer, useState } from "react";
 import HowToBox from './how-to-box';
 import HanziGrid, { initialGridState, gridReducer } from "./hanzi-grid";
 import { useStopwatch } from "react-timer-hook";
@@ -121,6 +121,7 @@ export default function GameView({ words, shuffledChars, dateSeed }) {
   const [showHowTo, setShowHowTo] = useState(true);
   const [showResumeModal, setShowResumeModal] = useState(false);
   const [lastSaveTime, setLastSaveTime] = useState(Date.now());
+  const [playedFailAnimation, setPlayedFailAnimation] = useState(false);
 
   // Initialize stopwatch with saved time if resuming
   const stopWatch = useStopwatch({ 
@@ -140,6 +141,7 @@ export default function GameView({ words, shuffledChars, dateSeed }) {
       stopWatch.reset(new Date(Date.now() + savedGame.milliseconds), false);
       setShowHowTo(false);
       setShowResumeModal(true);
+      setPlayedFailAnimation(savedGame.game.strikes === 3);
     }
   }, []);
 
@@ -151,11 +153,24 @@ export default function GameView({ words, shuffledChars, dateSeed }) {
     }
   }, [stopWatch, currentGameState]);
 
-  // save game state when it changes
+  function failAnimation() {
+    let tiles = currentGameState.tileStates.map((t, i) => i);
+    dispatch({ type: 'shake', tiles });
+    setTimeout(() => {
+      dispatch({ type: 'clear-shake', tiles });
+    }, 500);
+  }
+
   useEffect(() => {
+    if (currentGameState.strikes === 3 && !playedFailAnimation) {
+      failAnimation();
+      setPlayedFailAnimation(true);
+    }
+    // save game state when it changes
     if (gameIsFinished(currentGameState)) stopWatch.pause();
     saveLocalState(currentGameState, getMilliseconds(), dateSeed);
   }, [currentGameState.tileStates, currentGameState.strikes]);
+
 
   function resumeGame() {
     setShowResumeModal(false);
