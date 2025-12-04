@@ -8,15 +8,18 @@ import { produce } from "immer";
 const matchColors = ['border-green-300', 'border-red-600', 'border-teal-300', 'border-orange-300', 'border-pink-300', 'border-red-300', 'border-indigo-300', 'border-amber-300'];
 
 export const initialGridState = (characters) => ({
-  tileStates: characters.map(c => ({ match: null, color: null, shaking: false})),
+  tileStates: characters.map(c => ({char: c, match: null, color: null, shaking: false})),
   remainingColors: [...matchColors],
   selectedTile: null,
   completed: false,
   strikes: 0,
 });
 
-function gridReducer(state, action) {
+export function gridReducer(state, action) {
   switch(action.type) {
+    case 'reset': {
+      return action.state;
+    }
     case 'match': {
       const [index1, index2] = action.tiles;
       const color = state.remainingColors[0];
@@ -77,20 +80,21 @@ function gridReducer(state, action) {
   }
 }
 
-export default function HanziGrid({ characters, onGameStateChange, initialState }) {
-  const [gameState, dispatch] = useReducer(
-    gridReducer, 
-    initialState || initialGridState(characters)
-  );
+export default function HanziGrid({ state, dispatch}) {
+  // const [gameState, dispatch] = useReducer(
+  //   gridReducer, 
+  //   state
+  // );
 
-  const { tileStates, selectedTile, remainingColors, completed, strikes } = gameState;
+  const { tileStates, selectedTile, remainingColors, completed, strikes } = state;
+  const characters = tileStates.map(({char}) => char);
+  
   const prevStrikesRef = useRef(strikes);
 
   // Save game state to localStorage whenever it changes
-  useEffect(() => {
-    onGameStateChange(gameState);
-  }, [tileStates, strikes]);
-
+  // useEffect(() => {
+  //   onGameStateChange(gameState);
+  // }, [tileStates, strikes]);
 
   function failAnimation() {
     let tiles = tileStates.map((t, i) => i);

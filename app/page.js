@@ -4,6 +4,7 @@ import { currentDateSeed, sample } from "app/lib/utils";
 
 
 export default async function Page() {
+  
   const dateSeed = currentDateSeed()
   const todaysWords = getRandomWords(8, dateSeed)
   const chars = todaysWords.flatMap(word => Array.from(word))

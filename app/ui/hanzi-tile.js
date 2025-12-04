@@ -21,7 +21,7 @@ function HanziTile({ character, handleClick, selected, matchColor, shaking, inac
     borderColor: mahjongBlue, // mahjong tile trim
     background: mahjongTileFace // tile face
   };
-  
+
   return (
     <button className={classes} style={tileStyle} onClick={() => !inactive && handleClick()}>
       {isMatched && (
