@@ -4,6 +4,8 @@ on:
     branches: [ main, master ]
   pull_request:
     branches: [ main, master ]
+env:
+  NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET }}
 jobs:
   jest:
     name: Jest Unit Tests
