@@ -10,6 +10,16 @@ function currentDateSeed() {
 }
 
 /**
+ * Calculate the daily HSK difficulty level (1-5) based on the date seed
+ * @param {string} seed date seed string
+ * @returns {number} HSK level between 1 and 5
+ */
+function getDailyDifficulty(seed) {
+  const rng = seedrandom(seed)
+  return Math.floor(rng() * 5) + 1
+}
+
+/**
  * no-duplicates sampling
  * @param {number} num number of random items to pull from array 
  * @param {Array} array source
@@ -26,4 +36,4 @@ function sample(num, array, seed) {
   return Array.from(indices).map(i => array[i])
 }
 
-export { currentDateSeed, sample }
+export { currentDateSeed, sample, getDailyDifficulty }

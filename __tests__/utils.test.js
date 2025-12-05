@@ -1,4 +1,4 @@
-import { sample, currentDateSeed } from "../app/lib/utils";
+import { sample, currentDateSeed, getDailyDifficulty } from "../app/lib/utils";
 
 test('sample nothing', () => {
   expect(sample(0, [1,2,3,4])).toEqual([]);
@@ -31,5 +31,29 @@ test('sample with same seed', () => {
 
 test('currentDateSeed returns same string', () => {
   expect(currentDateSeed()).toEqual(currentDateSeed());
+})
+
+test('getDailyDifficulty returns level between 1 and 5', () => {
+  const seed = 'test-seed';
+  const level = getDailyDifficulty(seed);
+  expect(level).toBeGreaterThanOrEqual(1);
+  expect(level).toBeLessThanOrEqual(5);
+  expect(Number.isInteger(level)).toBe(true);
+})
+
+test('getDailyDifficulty returns same level for same seed', () => {
+  const seed = 'test-seed';
+  const level1 = getDailyDifficulty(seed);
+  const level2 = getDailyDifficulty(seed);
+  expect(level1).toEqual(level2);
+})
+
+test('getDailyDifficulty returns different levels for different seeds', () => {
+  const levels = new Set();
+  for (let i = 0; i < 100; i++) {
+    levels.add(getDailyDifficulty(`seed-${i}`));
+  }
+  // Should have multiple different levels across 100 seeds
+  expect(levels.size).toBeGreaterThan(1);
 })
 

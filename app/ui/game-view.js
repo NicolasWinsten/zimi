@@ -117,7 +117,7 @@ function TimerDisplay({ stopWatch }) {
   );
 }
 
-export default function GameView({ words, shuffledChars, dateSeed }) {
+export default function GameView({ words, shuffledChars, dateSeed, hskLevel }) {
   const [ currentGameState, dispatch ] = useReducer(gridReducer, initialGridState(shuffledChars));
 
   const [showHowTo, setShowHowTo] = useState(true);
@@ -182,7 +182,7 @@ export default function GameView({ words, shuffledChars, dateSeed }) {
 
   return (
     <div>
-      {showHowTo && <HowToBox onClose={resumeGame} open={showHowTo}/>}
+      {showHowTo && <HowToBox onClose={resumeGame} open={showHowTo} hskLevel={hskLevel}/>}
       
       <Dialog open={showResumeModal} onClose={resumeGame} data-testid="resume-game-dialog">
         <DialogTitle>Daily Zimi</DialogTitle>
@@ -191,6 +191,11 @@ export default function GameView({ words, shuffledChars, dateSeed }) {
           "You have a completed game from today. Come back tomorrow for a new zimi!" :
           "You have an in-progress game from today. Resume where you left off?"
         }
+        {hskLevel && (
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }} data-testid="resume-hsk-level">
+            Today's puzzle is HSK Level {hskLevel}
+          </Typography>
+        )}
         </DialogContent>
         <DialogActions>
           <Button onClick={resumeGame} color="primary" variant="contained" data-testid="resume-game-button">
