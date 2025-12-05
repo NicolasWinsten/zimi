@@ -71,10 +71,11 @@ function retrieveLocalState(dateSeed) {
 
 function StrikesIndicator({ strikes }) {
   return (
-    <Box sx={{ display: 'flex', gap: 1 }}>
+    <Box data-testid="strikes-indicator" sx={{ display: 'flex', gap: 1 }}>
       {[1,2,3].map(i => (
         <Box
           key={i}
+          data-testid={`strike-${i}`}
           sx={{
             width: 32,
             height: 32,
@@ -96,6 +97,7 @@ function StrikesIndicator({ strikes }) {
 function TimerDisplay({ stopWatch }) {
   return (
     <Box 
+      data-testid="timer-display"
       sx={{ 
         background: 'linear-gradient(to bottom right, #1f2937, #111827)',
         color: 'white',
@@ -182,7 +184,7 @@ export default function GameView({ words, shuffledChars, dateSeed }) {
     <div>
       {showHowTo && <HowToBox onClose={resumeGame} open={showHowTo}/>}
       
-      <Dialog open={showResumeModal} onClose={resumeGame} >
+      <Dialog open={showResumeModal} onClose={resumeGame} data-testid="resume-game-dialog">
         <DialogTitle>Daily Zimi</DialogTitle>
         <DialogContent>
         { gameIsFinished(currentGameState) ?
@@ -191,7 +193,7 @@ export default function GameView({ words, shuffledChars, dateSeed }) {
         }
         </DialogContent>
         <DialogActions>
-          <Button onClick={resumeGame} color="primary" variant="contained">
+          <Button onClick={resumeGame} color="primary" variant="contained" data-testid="resume-game-button">
             Okay!
           </Button>
         </DialogActions>
@@ -209,6 +211,7 @@ export default function GameView({ words, shuffledChars, dateSeed }) {
           </div>
           { gameIsFinished(currentGameState) && (
             <Button
+              data-testid="share-results-button"
               variant="contained"
               color="primary"
               onClick={() => {

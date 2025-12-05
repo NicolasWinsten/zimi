@@ -22,9 +22,10 @@ export default function HowToBox({ open, onClose }) {
       fullWidth
       scroll="paper"
       PaperProps={{ className: 'bg-white rounded-lg border-4 border-purple-500 p-6' }}
+      data-testid="how-to-dialog"
     >
       <DialogTitle id="how-to-play-title" className="text-center text-2xl font-bold text-gray-800">How to Play</DialogTitle>
-      <DialogContent dividers>
+      <DialogContent dividers data-testid="how-to-content">
         <div className="space-y-3 text-gray-700">
           <div className="flex items-start gap-2">
             <span className="font-bold min-w-fit">1.</span>
@@ -53,7 +54,7 @@ export default function HowToBox({ open, onClose }) {
         </div>
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose} variant="contained" color="primary" fullWidth>
+        <Button onClick={onClose} variant="contained" color="primary" fullWidth data-testid="how-to-start-button">
           Start!
         </Button>
       </DialogActions>

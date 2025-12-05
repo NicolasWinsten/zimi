@@ -3,7 +3,7 @@ import { mahjongBlue, mahjongTileFace } from "app/ui/styles";
 import { MaShanZheng } from "./fonts";
 import { motion } from "motion/react";
 
-function HanziTile({ character, handleClick, selected, matchColor, shaking, inactive}) {
+function HanziTile({ character, handleClick, selected, matchColor, shaking, inactive, index}) {
   const isMatched = !!matchColor;
   
   const classes = `${MaShanZheng.className}
@@ -20,7 +20,9 @@ function HanziTile({ character, handleClick, selected, matchColor, shaking, inac
 
   return (
     <motion.button 
-      className={classes} 
+      data-testid={`hanzi-tile-${index}`}
+      data-selected={selected}
+      className={classes}
       style={{
         ...tileStyle,
         zIndex: selected ? 10 : 1
@@ -47,8 +49,8 @@ function HanziTile({ character, handleClick, selected, matchColor, shaking, inac
       initial={false}
     >
       {isMatched && (
-        <div className={`absolute inset-0 flex items-center justify-center pointer-events-none`}>
-          <div className={`w-12 h-12 border-4 ${matchColor} rounded-full`}></div>
+        <div  className={`absolute inset-0 flex items-center justify-center pointer-events-none`}>
+          <div data-testid={`match-indicator-${index}`} className={`w-12 h-12 border-4 ${matchColor} rounded-full`}></div>
         </div>
       )}
       {character}

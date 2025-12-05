@@ -1,5 +1,4 @@
 'use client';
-import { useReducer, useEffect, useRef } from "react";
 import HanziTile from "./hanzi-tile";
 import { isValidWord } from "../lib/dictionary";
 import { produce } from "immer";
@@ -118,7 +117,7 @@ export default function HanziGrid({ state, dispatch }) {
   // I use the index as the key for character tiles here but allegedly you shouldn't do that.
   // it may cause bugs if the tiles are rearranged or removed.
   return (
-    <div className="grid grid-cols-4 gap-1 w-fit">
+    <div className="grid grid-cols-4 gap-1 w-fit" data-testid="hanzi-grid">
       { characters.map((char, index) =>
         <HanziTile
           key={char + index}
@@ -128,6 +127,7 @@ export default function HanziGrid({ state, dispatch }) {
           character={char}
           handleClick={() => handleTileClick(index)}
           inactive={completed || strikes === 3}
+          index={index}
           />)
       }
     </div>
