@@ -39,6 +39,7 @@ function countExtraWords(words, allowedLevels) {
   let extraCount = 0
   
   // Check all possible 2-character combinations
+  // Note: O(n²) complexity is acceptable here as character pool is small (~8-16 chars)
   for (let i = 0; i < charArray.length; i++) {
     for (let j = i + 1; j < charArray.length; j++) {
       const word1 = charArray[i] + charArray[j]
@@ -59,6 +60,9 @@ function countExtraWords(words, allowedLevels) {
   return extraCount
 }
 
+// Number of random samples to try when selecting words to maximize difficulty
+const WORD_SELECTION_ATTEMPTS = 10
+
 /**
  * Randomly selects today's words from the dictionary (based on current date)
  * Attempts to maximize the number of extra valid words that can be formed
@@ -73,11 +77,10 @@ function getRandomWords(num, seed, level = 3) {
   const candidates = dictionary.filter(isAllowed)
   
   // Try multiple samples and pick the one with most extra words
-  const numAttempts = 10
   let bestWords = null
   let maxExtraWords = -1
   
-  for (let attempt = 0; attempt < numAttempts; attempt++) {
+  for (let attempt = 0; attempt < WORD_SELECTION_ATTEMPTS; attempt++) {
     const attemptSeed = `${seed}-${attempt}`
     const words = sample(num, candidates, attemptSeed).map(word => word.simplified)
     const extraWords = countExtraWords(words, allowedLevels)
