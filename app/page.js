@@ -11,11 +11,16 @@ export default async function Page(props) {
   if (searchParams?.date) {
     try {
       const customDate = new Date(searchParams.date)
-      customDate.setUTCHours(0, 0, 0, 0)
-      dateSeed = customDate.toUTCString()
-      console.log(`Using custom date: ${searchParams.date} -> ${dateSeed}`)
+      // Check if date is valid
+      if (!isNaN(customDate.getTime())) {
+        customDate.setUTCHours(0, 0, 0, 0)
+        dateSeed = customDate.toUTCString()
+        console.log(`Using custom date: ${searchParams.date} -> ${dateSeed}`)
+      } else {
+        console.error('Invalid date parameter:', searchParams.date)
+      }
     } catch (e) {
-      console.error('Invalid date parameter:', searchParams.date)
+      console.error('Invalid date parameter:', searchParams.date, e)
     }
   }
   
@@ -25,7 +30,10 @@ export default async function Page(props) {
   let todaysWords
   if (searchParams?.wordList) {
     // Parse comma-separated word list
-    const customWords = searchParams.wordList.split(',').map(w => w.trim()).filter(w => w.length > 0)
+    const customWords = searchParams.wordList
+      .split(',')
+      .map(w => w.trim())
+      .filter(w => w.length > 0)
     // Validate that all words are valid
     const validWords = customWords.filter(word => isValidWord(word))
     if (validWords.length > 0) {

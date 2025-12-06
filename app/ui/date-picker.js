@@ -9,8 +9,19 @@ export function DatePicker() {
   const searchParams = useSearchParams();
   
   // Get current date or date from search params
-  const currentDate = searchParams?.get('date') || new Date().toISOString().split('T')[0];
-  const [selectedDate, setSelectedDate] = useState(currentDate);
+  const getInitialDate = () => {
+    const paramDate = searchParams?.get('date');
+    if (paramDate) {
+      // Validate the date from search params
+      const testDate = new Date(paramDate);
+      if (!isNaN(testDate.getTime())) {
+        return paramDate;
+      }
+    }
+    return new Date().toISOString().split('T')[0];
+  };
+  
+  const [selectedDate, setSelectedDate] = useState(getInitialDate());
 
   const handleDateChange = (event) => {
     const newDate = event.target.value;
