@@ -4,6 +4,7 @@ import { MaShanZheng, NotoSerifChinese } from 'app/ui/fonts';
 import UserMenu from 'app/ui/user-menu';
 import HelpButton from 'app/ui/help-button';
 import { DailyTimer } from 'app/ui/timer';
+import { DatePicker } from 'app/ui/date-picker';
 import { mahjongFeltPurple, mahjongTileFace } from 'app/ui/styles';
 
 const styleClass = {
@@ -27,6 +28,7 @@ export default function RootLayout({ children }) {
                     <h1 className="text-2xl font-bold">ZiMi <span className='text-nowrap'>字谜!</span></h1>
                   </div>
                   <div className="flex items-center gap-4">
+                    <DatePicker />
                     <DailyTimer />
                     <HelpButton />
                     {/* <UserMenu /> */}
