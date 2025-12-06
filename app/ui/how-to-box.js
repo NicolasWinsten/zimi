@@ -9,7 +9,7 @@ import Button from '@mui/material/Button';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import { useTheme } from '@mui/material/styles';
 
-export default function HowToBox({ open, onClose }) {
+export default function HowToBox({ open, onClose, hskLevel }) {
   const theme = useTheme();
   const fullScreen = useMediaQuery(theme.breakpoints.down('sm'));
 
@@ -24,7 +24,14 @@ export default function HowToBox({ open, onClose }) {
       PaperProps={{ className: 'bg-white rounded-lg border-4 border-purple-500 p-6' }}
       data-testid="how-to-dialog"
     >
-      <DialogTitle id="how-to-play-title" className="text-center text-2xl font-bold text-gray-800">How to Play</DialogTitle>
+      <DialogTitle id="how-to-play-title" className="text-center text-2xl font-bold text-gray-800">
+        How to Play
+        {hskLevel && (
+          <div className="text-sm font-normal text-purple-600 mt-1" data-testid="hsk-level-display">
+            Today's Puzzle: HSK Level {hskLevel}
+          </div>
+        )}
+      </DialogTitle>
       <DialogContent dividers data-testid="how-to-content">
         <div className="space-y-3 text-gray-700">
           <div className="flex items-start gap-2">
