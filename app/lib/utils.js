@@ -1,12 +1,21 @@
 import seedrandom from "seedrandom"
 
 /**
+ * Converts a Date object to a consistent date seed string
+ * @param {Date} date - the date to convert
+ * @returns {string} a seed string based on the date (UTC)
+ */
+function dateSeedFromDate(date) {
+  const d = new Date(date)
+  d.setUTCHours(0, 0, 0, 0)
+  return d.toUTCString()
+}
+
+/**
  * @returns {string} a seed based on the current date (UTC)
  */
 function currentDateSeed() {
-  const now = new Date()
-  now.setUTCHours(0, 0, 0, 0)
-  return now.toUTCString()
+  return dateSeedFromDate(new Date())
 }
 
 /**
@@ -36,4 +45,4 @@ function sample(num, array, seed) {
   return Array.from(indices).map(i => array[i])
 }
 
-export { currentDateSeed, sample, getDailyDifficulty }
+export { currentDateSeed, dateSeedFromDate, sample, getDailyDifficulty }

@@ -1,6 +1,7 @@
 import GameView from "app/ui/game-view";
+import ErrorPage from "app/ui/error-page";
 import { getRandomWords, isValidWord } from "app/lib/dictionary"; 
-import { currentDateSeed, sample, getDailyDifficulty } from "app/lib/utils";
+import { currentDateSeed, dateSeedFromDate, sample, getDailyDifficulty } from "app/lib/utils";
 
 
 export default async function Page(props) {
@@ -13,8 +14,7 @@ export default async function Page(props) {
       const customDate = new Date(searchParams.date)
       // Check if date is valid
       if (!isNaN(customDate.getTime())) {
-        customDate.setUTCHours(0, 0, 0, 0)
-        dateSeed = customDate.toUTCString()
+        dateSeed = dateSeedFromDate(customDate)
         console.log(`Using custom date: ${searchParams.date} -> ${dateSeed}`)
       } else {
         console.error('Invalid date parameter:', searchParams.date)
@@ -40,8 +40,13 @@ export default async function Page(props) {
       todaysWords = validWords
       console.log(`Using custom word list: ${todaysWords.join(', ')}`)
     } else {
-      console.error('Invalid word list - falling back to random words')
-      todaysWords = getRandomWords(8, dateSeed, hskLevel)
+      // Show error page for invalid word list
+      console.error('Invalid word list:', searchParams.wordList)
+      return (
+        <div>
+          <ErrorPage invalidWordList={searchParams.wordList} />
+        </div>
+      )
     }
   } else {
     todaysWords = getRandomWords(8, dateSeed, hskLevel)
