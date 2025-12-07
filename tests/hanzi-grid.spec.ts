@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { collectTiles, clickTileByIndex, countSelectedTiles } from './helpers.js';
+import { collectTiles, clickTileByIndex, countSelectedTiles } from './helpers';
 
 test.describe('HanziGrid Component', () => {
   test.beforeEach(async ({ page }) => {
