@@ -4,36 +4,47 @@
 
 import { Page, Locator } from '@playwright/test';
 
+export interface GameState {
+  tileStates: Array<{ char: string; match: number | null; color: string | null; shaking: boolean;  }>;
+  selectedTile: number | null;
+  completed: boolean;
+  strikes: number;
+}
+
 export interface SavedGameState {
   date: string;
-  game: {
-    tileStates: Array<{ match: number | null }>;
-    strikes: number;
-    completed: boolean;
-  };
+  game: GameState;
+  words: string[];
+  milliseconds: number;
 }
 
-export async function collectTiles(page: Page): Promise<Locator> {
-  return await page.getByTestId('hanzi-grid').getByTestId(/^hanzi-tile-/);
+export function getGridElement(page: Page): Locator {
+  return page.getByTestId('hanzi-grid');
 }
 
-export async function clickTileByIndex(page: Page, index: number): Promise<Locator> {
+export function collectTiles(page: Page): Locator {
+  return page.getByTestId('hanzi-grid').getByTestId(/^hanzi-tile-/);
+}
+
+export function getTileByIndex(page: Page, index: number): Locator {
+  return page.getByTestId(`hanzi-tile-${index}`);
+}
+
+export function getTileByCharacter(page: Page, character: string): Locator {
+  return page.getByTestId('hanzi-grid').getByText(character);
+}
+
+export async function clickTileByIndex(page: Page, index: number): Promise<void> {
   const tile = page.getByTestId(`hanzi-tile-${index}`);
   await tile.click({timeout: 1000});
-  return tile;
 }
 
-export async function countSelectedTiles(page: Page): Promise<number> {
-  const allTiles = await collectTiles(page);
-  return allTiles.evaluateAll(tiles => 
-    tiles.filter(tile => tile.getAttribute('data-selected') === 'true').length
-  );
+export function getSelectedTile(page: Page): Locator {
+  return getGridElement(page).locator('[data-testid^="hanzi-tile-"][data-selected="true"]')
 }
 
 export async function closeHowToDialog(page: Page): Promise<void> {
-  const { expect } = await import('@playwright/test');
   const startButton = page.getByTestId('how-to-start-button');
-  await expect(startButton).toBeVisible();
   await startButton.click();
   await page.getByTestId('how-to-dialog').waitFor({ state: 'detached' });
 }
@@ -45,13 +56,28 @@ export async function retrieveLocalSave(page: Page): Promise<SavedGameState | nu
   });
 }
 
-export async function getTileIndexByCharacter(page: Page, character: string): Promise<number[]> {
-  const tiles = await collectTiles(page);
-  const count = await tiles.count();
-  const indices: number[] = [];
-  for (let i = 0; i < count; i++) {
-    const tileChar = await tiles.nth(i).textContent();
-    if (tileChar === character) indices.push(i);
-  }
-  return indices;
+export function activeStrikes(page: Page): Promise<number> {
+  return page.getByTestId('strikes-indicator').filter({ has: page.locator('[data-strike-active="true"]') }).count();
+}
+
+export async function collectTileStates(page: Page): Promise<Array<{ char: string; match: number | null; color: string | null; shaking: boolean;  }>> {
+  const tiles = collectTiles(page);
+  const tileStates = await tiles.evaluateAll((tileElements) => {
+    return tileElements.map(tile => ({
+      char: tile.textContent || '',
+      match: null,
+      color: tile.getAttribute('data-match-color'),
+      shaking: false,
+    }));
+  })
+
+  return tileStates.map((state, index) => {
+    if (state.color) {
+      const match = tileStates.findIndex((t, i) => i !== index && t.color === state.color);
+      return {...state, match: match == -1 ? null : match};
+    } else {
+      return state
+    }
+  });
+
 }
