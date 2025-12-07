@@ -40,14 +40,16 @@ export async function closeHowToDialog(page: Page): Promise<void> {
 
 export async function retrieveLocalSave(page: Page): Promise<SavedGameState | null> {
   return await page.evaluate(() => {
-    return JSON.parse(localStorage.getItem('zimi-save'));
+    const item = localStorage.getItem('zimi-save');
+    return item ? JSON.parse(item) : null;
   });
 }
 
 export async function getTileIndexByCharacter(page: Page, character: string): Promise<number[]> {
   const tiles = await collectTiles(page);
+  const count = await tiles.count();
   const indices: number[] = [];
-  for (let i = 0; i < tiles.length; i++) {
+  for (let i = 0; i < count; i++) {
     const tileChar = await tiles.nth(i).textContent();
     if (tileChar === character) indices.push(i);
   }

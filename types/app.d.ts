@@ -1,6 +1,6 @@
 declare module 'app/lib/utils' {
   export function currentDateStr(): string;
-  export function sample<T>(num: number, array: T[], seed?: string): T[];
+  export function sample<T>(num: number, array: T[], seed?: string | undefined): T[];
   export function mkDateStr(date: Date): string;
   export function getDailyDifficulty(seed: string): number;
 }
