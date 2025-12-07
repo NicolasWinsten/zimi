@@ -21,7 +21,6 @@
     "types": ["jest", "@testing-library/jest-dom", "@playwright/test"]
   },
   "include": [
-    "next-env.d.ts",
     "**/*.ts",
     "**/*.tsx",
     ".next/types/**/*.ts",
