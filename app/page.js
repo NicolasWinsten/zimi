@@ -56,7 +56,7 @@ export default async function Page(props) {
 
   return (
       <div>
-        <GameView key={dateSeed} words={todaysWords} shuffledChars={shuffledChars} dateSeed={dateSeed} hskLevel={hskLevel} ignoreLocalStorage={customWordList} />
+        <GameView key={dateSeed} words={todaysWords} shuffledChars={shuffledChars} dateSeed={dateSeed} hskLevel={hskLevel} />
       </div>
   );
 }
