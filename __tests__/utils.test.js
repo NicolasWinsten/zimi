@@ -1,4 +1,4 @@
-import { sample, currentDateSeed, dateSeedFromDate, getDailyDifficulty } from "../app/lib/utils";
+import { sample, currentDateStr, mkDateStr, getDailyDifficulty } from "../app/lib/utils";
 
 test('sample nothing', () => {
   expect(sample(0, [1,2,3,4])).toEqual([]);
@@ -29,8 +29,8 @@ test('sample with same seed', () => {
   expect(result1).toEqual(result2);
 })
 
-test('currentDateSeed returns same string', () => {
-  expect(currentDateSeed()).toEqual(currentDateSeed());
+test('currentDateStr returns same string', () => {
+  expect(currentDateStr()).toEqual(currentDateStr());
 })
 
 test('getDailyDifficulty returns level between 1 and 5', () => {
@@ -53,31 +53,32 @@ test('getDailyDifficulty returns different levels for different seeds', () => {
   for (let i = 0; i < 100; i++) {
     levels.add(getDailyDifficulty(`seed-${i}`));
   }
-  // Should have multiple different levels across 100 seeds
-  expect(levels.size).toBeGreaterThan(1);
+  // Should have 5 discrete values (1 to 5)
+  // this has a very very small chance of failing due to randomness
+  expect(levels.size).toEqual(5);
 })
 
-test('dateSeedFromDate returns consistent seed for same date', () => {
+test('mkDateStr returns consistent seed for same date', () => {
   const date1 = new Date('2025-01-01T10:30:00Z');
   const date2 = new Date('2025-01-01T22:45:00Z');
-  const seed1 = dateSeedFromDate(date1);
-  const seed2 = dateSeedFromDate(date2);
+  const seed1 = mkDateStr(date1);
+  const seed2 = mkDateStr(date2);
   // Should return same seed regardless of time
   expect(seed1).toEqual(seed2);
 })
 
-test('dateSeedFromDate returns different seeds for different dates', () => {
+test('mkDateStr returns different seeds for different dates', () => {
   const date1 = new Date('2025-01-01');
   const date2 = new Date('2025-01-02');
-  const seed1 = dateSeedFromDate(date1);
-  const seed2 = dateSeedFromDate(date2);
+  const seed1 = mkDateStr(date1);
+  const seed2 = mkDateStr(date2);
   expect(seed1).not.toEqual(seed2);
 })
 
-test('dateSeedFromDate matches currentDateSeed for today', () => {
+test('mkDateStr matches currentDateStr for today', () => {
   const now = new Date();
-  const seed1 = dateSeedFromDate(now);
-  const seed2 = currentDateSeed();
+  const seed1 = mkDateStr(now);
+  const seed2 = currentDateStr();
   expect(seed1).toEqual(seed2);
 })
 

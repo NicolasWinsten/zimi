@@ -45,9 +45,9 @@ const makeShareableResultString = (gameState, milliseconds, dateSeed) => {
  */
 function saveLocalState(gameState, milliseconds, dateSeed) {
   console.log('Saving game state to localStorage...', gameState, milliseconds, dateSeed);
-  const objectToStore = { game: gameState, milliseconds };
+  const objectToStore = { game: gameState, milliseconds, date: dateSeed };
   try {
-    localStorage.setItem(dateSeed, JSON.stringify(objectToStore));
+    localStorage.setItem("zimi-save", JSON.stringify(objectToStore));
   } catch (e) {
     console.error('Failed to save game state to localStorage:', e);
   }
@@ -58,10 +58,14 @@ function saveLocalState(gameState, milliseconds, dateSeed) {
  * @param {string} dateSeed retrieve last saved game state for this date
  * @returns { game: grid state, milliseconds: number } | null
  */
-function retrieveLocalState(dateSeed) {
+function retrieveLocalState(dateStr) {
   try {
-    const savedData = JSON.parse(localStorage.getItem(dateSeed));
+    const savedData = JSON.parse(localStorage.getItem("zimi-save"));
     console.log('Retrieved raw saved data:', savedData);
+    if (!savedData || savedData.date !== dateStr) {
+      console.log('No saved game state for', dateStr);
+      return null;
+    }
     return savedData
   } catch (e) {
     console.error('Failed to retrieve game state:', e);
@@ -117,7 +121,7 @@ function TimerDisplay({ stopWatch }) {
   );
 }
 
-export default function GameView({ words, shuffledChars, dateSeed, hskLevel }) {
+export default function GameView({ words, shuffledChars, dateSeed, hskLevel, ignoreLocalStorage = false }) {
   const [ currentGameState, dispatch ] = useReducer(gridReducer, initialGridState(shuffledChars));
 
   const [showHowTo, setShowHowTo] = useState(true);
@@ -137,6 +141,13 @@ export default function GameView({ words, shuffledChars, dateSeed, hskLevel }) {
 
   // upon mounting, check for saved game state in localStorage
   useEffect(() => {
+    // Skip loading saved game if using custom word list
+    if (ignoreLocalStorage) {
+      setShowHowTo(true);
+      setShowResumeModal(false);
+      return;
+    }
+    
     const savedGame = retrieveLocalState(dateSeed);
     if (savedGame) {
       dispatch({ type: 'reset', state: savedGame.game });
@@ -144,8 +155,11 @@ export default function GameView({ words, shuffledChars, dateSeed, hskLevel }) {
       setShowHowTo(false);
       setShowResumeModal(true);
       setPlayedFailAnimation(savedGame.game.strikes === 3);
+    } else {
+      setShowHowTo(true);
+      setShowResumeModal(false);
     }
-  }, []);
+  }, [dateSeed, ignoreLocalStorage]);
 
   // Continuously save stopwatch value while timer is running every second
   useEffect(() => {
@@ -170,8 +184,9 @@ export default function GameView({ words, shuffledChars, dateSeed, hskLevel }) {
     }
     // save game state when it changes
     if (gameIsFinished(currentGameState)) stopWatch.pause();
-    saveLocalState(currentGameState, getMilliseconds(), dateSeed);
-  }, [currentGameState.tileStates, currentGameState.strikes]);
+    // only save if the game was actually played
+    if (getMilliseconds() > 0) saveLocalState(currentGameState, getMilliseconds(), dateSeed);
+  }, [currentGameState.tileStates, currentGameState.strikes, dateSeed]);
 
 
   function resumeGame() {

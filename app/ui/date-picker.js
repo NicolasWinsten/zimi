@@ -1,12 +1,27 @@
 'use client';
 
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Box, TextField } from '@mui/material';
 
-export function DatePicker() {
+export default function DatePicker() {
+  return(
+    <Suspense>
+      <DatePicker_ />
+    </Suspense>
+  )
+}
+
+function DatePicker_() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  
+  // Only show date picker if dev mode is enabled
+  const devMode = searchParams?.get('dev') === 'true';
+  
+  if (!devMode) {
+    return null;
+  }
   
   // Get current date or date from search params
   const getInitialDate = () => {
@@ -27,8 +42,9 @@ export function DatePicker() {
     const newDate = event.target.value;
     setSelectedDate(newDate);
     
-    // Update URL with new date parameter
+    // Update URL with new date parameter, keeping dev=true
     const params = new URLSearchParams(searchParams?.toString());
+    params.set('dev', 'true'); // Ensure dev mode stays enabled
     if (newDate) {
       params.set('date', newDate);
     } else {

@@ -3,7 +3,7 @@
 import { Box, Typography, Button, Paper } from '@mui/material';
 import { useRouter } from 'next/navigation';
 
-export default function ErrorPage({ invalidWordList }) {
+export default function ErrorPage({ msg, info }) {
   const router = useRouter();
 
   const handleGoBack = () => {
@@ -30,11 +30,11 @@ export default function ErrorPage({ invalidWordList }) {
         }}
       >
         <Typography variant="h4" component="h1" gutterBottom color="error">
-          Invalid Word List
+          Whoops!
         </Typography>
         
         <Typography variant="body1" sx={{ mb: 3 }}>
-          The word list you provided contains invalid or unrecognized words.
+          {msg}
         </Typography>
         
         <Paper
@@ -48,16 +48,16 @@ export default function ErrorPage({ invalidWordList }) {
           }}
         >
           <Typography variant="body2" color="text.secondary">
-            <strong>Provided word list:</strong>
+            <strong>More info:</strong>
           </Typography>
           <Typography variant="body1" sx={{ mt: 1 }}>
-            {invalidWordList}
+            {info}
           </Typography>
         </Paper>
         
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+        {/* <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
           Please ensure all words are valid 2-character Chinese words from the HSK dictionary.
-        </Typography>
+        </Typography> */}
         
         <Button
           variant="contained"

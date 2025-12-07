@@ -5,17 +5,18 @@ import seedrandom from "seedrandom"
  * @param {Date} date - the date to convert
  * @returns {string} a seed string based on the date (UTC)
  */
-function dateSeedFromDate(date) {
-  const d = new Date(date)
-  d.setUTCHours(0, 0, 0, 0)
-  return d.toUTCString()
+function mkDateStr(date) {
+    const year = date.getUTCFullYear();
+    const month = String(date.getUTCMonth() + 1).padStart(2, '0'); // Month is 0-based
+    const day = String(date.getUTCDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
 }
 
 /**
  * @returns {string} a seed based on the current date (UTC)
  */
-function currentDateSeed() {
-  return dateSeedFromDate(new Date())
+function currentDateStr() {
+  return mkDateStr(new Date())
 }
 
 /**
@@ -45,4 +46,4 @@ function sample(num, array, seed) {
   return Array.from(indices).map(i => array[i])
 }
 
-export { currentDateSeed, dateSeedFromDate, sample, getDailyDifficulty }
+export { currentDateStr, mkDateStr, sample, getDailyDifficulty }

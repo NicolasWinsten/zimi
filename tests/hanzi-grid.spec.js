@@ -6,7 +6,7 @@ async function collectTiles(page) {
 
 async function clickTileByIndex(page, index) {
   const tile = page.getByTestId(`hanzi-tile-${index}`);
-  await tile.click({timeout: 500});
+  await tile.click({timeout: 1000});
   return tile;
 }
 
