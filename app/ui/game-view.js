@@ -42,12 +42,13 @@ const makeShareableResultString = (gameState, milliseconds, dateSeed) => {
  * @param {*} gameState 
  * @param {*} milliseconds 
  * @param {*} dateSeed 
+ * @param {*} words - array of words for this game
  */
-function saveLocalState(gameState, milliseconds, dateSeed) {
+function saveLocalState(gameState, milliseconds, dateSeed, words) {
   console.log('Saving game state to localStorage...', gameState, milliseconds, dateSeed);
-  const objectToStore = { game: gameState, milliseconds };
+  const objectToStore = { game: gameState, milliseconds, date: dateSeed, words };
   try {
-    localStorage.setItem(dateSeed, JSON.stringify(objectToStore));
+    localStorage.setItem("zimi-save", JSON.stringify(objectToStore));
   } catch (e) {
     console.error('Failed to save game state to localStorage:', e);
   }
@@ -56,12 +57,25 @@ function saveLocalState(gameState, milliseconds, dateSeed) {
 /**
  * 
  * @param {string} dateSeed retrieve last saved game state for this date
+ * @param {Array<string>} currentWords - the word list for the current game
  * @returns { game: grid state, milliseconds: number } | null
  */
-function retrieveLocalState(dateSeed) {
+function retrieveLocalState(dateStr, currentWords) {
   try {
-    const savedData = JSON.parse(localStorage.getItem(dateSeed));
+    const savedData = JSON.parse(localStorage.getItem("zimi-save"));
     console.log('Retrieved raw saved data:', savedData);
+    
+    if (!savedData || savedData.date !== dateStr) {
+      console.log('No saved game state for', dateStr);
+      return null;
+    }
+    
+    const wordListMatch = JSON.stringify(savedData.words) === JSON.stringify(currentWords);
+    if (!wordListMatch) {
+      console.log('Saved word list does not match current word list. Saved:', savedData.words, 'Current:', currentWords);
+      return null;
+    }
+
     return savedData
   } catch (e) {
     console.error('Failed to retrieve game state:', e);
@@ -117,7 +131,7 @@ function TimerDisplay({ stopWatch }) {
   );
 }
 
-export default function GameView({ words, shuffledChars, dateSeed }) {
+export default function GameView({ words, shuffledChars, dateSeed, hskLevel }) {
   const [ currentGameState, dispatch ] = useReducer(gridReducer, initialGridState(shuffledChars));
 
   const [showHowTo, setShowHowTo] = useState(true);
@@ -137,20 +151,23 @@ export default function GameView({ words, shuffledChars, dateSeed }) {
 
   // upon mounting, check for saved game state in localStorage
   useEffect(() => {
-    const savedGame = retrieveLocalState(dateSeed);
+    const savedGame = retrieveLocalState(dateSeed, words);
     if (savedGame) {
       dispatch({ type: 'reset', state: savedGame.game });
       stopWatch.reset(new Date(Date.now() + savedGame.milliseconds), false);
       setShowHowTo(false);
       setShowResumeModal(true);
       setPlayedFailAnimation(savedGame.game.strikes === 3);
+    } else {
+      setShowHowTo(true);
+      setShowResumeModal(false);
     }
-  }, []);
+  }, [dateSeed, words]);
 
   // Continuously save stopwatch value while timer is running every second
   useEffect(() => {
     if (Date.now() - lastSaveTime > 1000 && stopWatch.isRunning) {
-      saveLocalState(currentGameState, getMilliseconds(), dateSeed);
+      saveLocalState(currentGameState, getMilliseconds(), dateSeed, words);
       setLastSaveTime(Date.now());
     }
   }, [stopWatch, currentGameState]);
@@ -170,8 +187,9 @@ export default function GameView({ words, shuffledChars, dateSeed }) {
     }
     // save game state when it changes
     if (gameIsFinished(currentGameState)) stopWatch.pause();
-    saveLocalState(currentGameState, getMilliseconds(), dateSeed);
-  }, [currentGameState.tileStates, currentGameState.strikes]);
+    // only save if the game was actually played
+    if (getMilliseconds() > 0) saveLocalState(currentGameState, getMilliseconds(), dateSeed, words);
+  }, [currentGameState.tileStates, currentGameState.strikes, dateSeed, words]);
 
 
   function resumeGame() {
@@ -182,7 +200,7 @@ export default function GameView({ words, shuffledChars, dateSeed }) {
 
   return (
     <div>
-      {showHowTo && <HowToBox onClose={resumeGame} open={showHowTo}/>}
+      {showHowTo && <HowToBox onClose={resumeGame} open={showHowTo} hskLevel={hskLevel}/>}
       
       <Dialog open={showResumeModal} onClose={resumeGame} data-testid="resume-game-dialog">
         <DialogTitle>Daily Zimi</DialogTitle>
@@ -191,6 +209,11 @@ export default function GameView({ words, shuffledChars, dateSeed }) {
           "You have a completed game from today. Come back tomorrow for a new zimi!" :
           "You have an in-progress game from today. Resume where you left off?"
         }
+        {hskLevel && (
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }} data-testid="resume-hsk-level">
+            Today's puzzle is HSK Level {hskLevel}
+          </Typography>
+        )}
         </DialogContent>
         <DialogActions>
           <Button onClick={resumeGame} color="primary" variant="contained" data-testid="resume-game-button">

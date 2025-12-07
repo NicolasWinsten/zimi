@@ -1,21 +1,5 @@
 import { test, expect } from '@playwright/test';
-
-async function collectTiles(page) {
-  return await page.getByTestId('hanzi-grid').getByTestId(/^hanzi-tile-/);
-}
-
-async function clickTileByIndex(page, index) {
-  const tile = page.getByTestId(`hanzi-tile-${index}`);
-  await tile.click({timeout: 500});
-  return tile;
-}
-
-async function countSelectedTiles(page) {
-  const allTiles = await collectTiles(page);
-  return allTiles.evaluateAll(tiles => 
-    tiles.filter(tile => tile.getAttribute('data-selected') === 'true').length
-  );
-}
+import { collectTiles, clickTileByIndex, countSelectedTiles } from './helpers.js';
 
 test.describe('HanziGrid Component', () => {
   test.beforeEach(async ({ page }) => {
