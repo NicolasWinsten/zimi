@@ -28,9 +28,9 @@ test.describe('LocalStorage Game State', () => {
     const today = new Date();
     
     // Check that the saved date is today (ignoring time)
-    expect(savedDate.getFullYear()).toEqual(today.getFullYear());
-    expect(savedDate.getMonth()).toEqual(today.getMonth());
-    expect(savedDate.getDate()).toEqual(today.getDate());
+    expect(savedDate.getUTCFullYear()).toEqual(today.getUTCFullYear());
+    expect(savedDate.getUTCMonth()).toEqual(today.getUTCMonth());
+    expect(savedDate.getUTCDate()).toEqual(today.getUTCDate());
 
     const { tileStates, strikes, completed } = savedData!.game;
 

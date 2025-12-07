@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { collectTiles, clickTileByIndex, getSelectedTile, getTileByCharacter } from './helpers';
+import { collectTiles, clickTileByIndex, getSelectedTile, getTileByCharacter, closeHowToDialog } from './helpers';
 
 test.describe('Two tile custom game', () => {
   test.beforeEach(async ({ page }) => {
@@ -7,13 +7,15 @@ test.describe('Two tile custom game', () => {
     await page.goto('http://localhost:3000/?dev=true&words=结婚');
     
     // Close the "How To" dialog if it appears
-    const startButton = page.getByTestId('how-to-start-button');
+    // const startButton = page.getByTestId('how-to-start-button');
 
-    await expect(startButton).toBeVisible();
+    // await expect(startButton).toBeVisible();
 
-    await startButton.click()
+    // await startButton.click()
+
+    await closeHowToDialog(page);
     
-    await page.getByTestId('how-to-dialog').waitFor({ state: 'detached' });
+    // await page.getByTestId('how-to-dialog').waitFor({ state: 'detached' });
 
     const howToDialog = page.getByTestId('how-to-dialog');
     await expect(howToDialog).toHaveCount(0);
@@ -45,13 +47,15 @@ test.describe('HanziGrid Component', () => {
     await page.goto('http://localhost:3000');
     
     // Close the "How To" dialog if it appears
-    const startButton = page.getByTestId('how-to-start-button');
+    // const startButton = page.getByTestId('how-to-start-button');
 
-    await expect(startButton).toBeVisible();
+    // await expect(startButton).toBeVisible();
 
-    await startButton.click()
+    // await startButton.click()
     
-    await page.getByTestId('how-to-dialog').waitFor({ state: 'detached' });
+    // await page.getByTestId('how-to-dialog').waitFor({ state: 'detached' });
+
+    await closeHowToDialog(page);
 
     const howToDialog = page.getByTestId('how-to-dialog');
     await expect(howToDialog).toHaveCount(0);
