@@ -25,8 +25,8 @@ function currentDateStr() {
  * @returns {number} HSK level between 1 and 5
  */
 function getDailyDifficulty(seed) {
-  const rng = seedrandom(seed)
-  return Math.floor(rng() * 5) + 1
+  const lvlFreqs = [1,2,2,3,3,3,3,4,4,5] // weighted frequencies
+  return sample(1, lvlFreqs, seed)[0]
 }
 
 /**
