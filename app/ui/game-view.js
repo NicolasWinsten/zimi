@@ -90,6 +90,7 @@ function StrikesIndicator({ strikes }) {
         <Box
           key={i}
           data-testid={`strike-${i}`}
+          data-strike-active={i <= strikes ? 'true' : 'false'}
           sx={{
             width: 32,
             height: 32,

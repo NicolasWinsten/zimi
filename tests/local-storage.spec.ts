@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { clickTileByIndex, closeHowToDialog, retrieveLocalSave } from './helpers.js';
+import { clickTileByIndex, closeHowToDialog, retrieveLocalSave } from './helpers';
 
 test.describe('LocalStorage Game State', () => {
   test.beforeEach(async ({ page }) => {
@@ -24,15 +24,15 @@ test.describe('LocalStorage Game State', () => {
     
     expect(savedData).not.toBeNull();
 
-    const savedDate = new Date(savedData.date);
+    const savedDate = new Date(savedData!.date);
     const today = new Date();
     
     // Check that the saved date is today (ignoring time)
-    expect(savedDate.getFullYear()).toEqual(today.getFullYear());
-    expect(savedDate.getMonth()).toEqual(today.getMonth());
-    expect(savedDate.getDate()).toEqual(today.getDate());
+    expect(savedDate.getUTCFullYear()).toEqual(today.getUTCFullYear());
+    expect(savedDate.getUTCMonth()).toEqual(today.getUTCMonth());
+    expect(savedDate.getUTCDate()).toEqual(today.getUTCDate());
 
-    const { tileStates, strikes, completed } = savedData.game;
+    const { tileStates, strikes, completed } = savedData!.game;
 
     expect(completed).toBeFalsy();
     expect([0,1].includes(strikes)).toBeTruthy();
@@ -91,8 +91,8 @@ test.describe('LocalStorage Game State', () => {
     await resumeDialog.waitFor({ state: 'hidden' });
     
     // Verify tiles still have the same content (same seed)
-    await expect(page.getByTestId('hanzi-tile-0')).toHaveText(tile0Text);
-    await expect(page.getByTestId('hanzi-tile-4')).toHaveText(tile4Text);
+    await expect(page.getByTestId('hanzi-tile-0')).toHaveText(tile0Text!);
+    await expect(page.getByTestId('hanzi-tile-4')).toHaveText(tile4Text!);
     
   });
 

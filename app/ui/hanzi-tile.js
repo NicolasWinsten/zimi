@@ -22,6 +22,7 @@ function HanziTile({ character, handleClick, selected, matchColor, shaking, inac
     <motion.button 
       data-testid={`hanzi-tile-${index}`}
       data-selected={selected}
+      data-match-color={matchColor || ''}
       className={classes}
       style={{
         ...tileStyle,

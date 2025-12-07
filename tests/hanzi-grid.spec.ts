@@ -1,5 +1,45 @@
 import { test, expect } from '@playwright/test';
-import { collectTiles, clickTileByIndex, countSelectedTiles } from './helpers.js';
+import { collectTiles, clickTileByIndex, getSelectedTile, getTileByCharacter, closeHowToDialog } from './helpers';
+
+test.describe('Two tile custom game', () => {
+  test.beforeEach(async ({ page }) => {
+    // Navigate to the custom game page with 2 tiles
+    await page.goto('http://localhost:3000/?dev=true&words=结婚');
+    
+    // Close the "How To" dialog if it appears
+    // const startButton = page.getByTestId('how-to-start-button');
+
+    // await expect(startButton).toBeVisible();
+
+    // await startButton.click()
+
+    await closeHowToDialog(page);
+    
+    // await page.getByTestId('how-to-dialog').waitFor({ state: 'detached' });
+
+    const howToDialog = page.getByTestId('how-to-dialog');
+    await expect(howToDialog).toHaveCount(0);
+
+    const resumeDialog = page.getByTestId('resume-game-dialog');
+    await expect(resumeDialog).toHaveCount(0);
+
+    // Wait for the grid to load
+    await page.getByTestId('hanzi-grid').waitFor();
+  })
+
+  test('match two tiles', async ({ page }) => {
+    const jie = getTileByCharacter(page, '结');
+    const hun = getTileByCharacter(page, '婚');
+
+    await jie.click();
+    await hun.click();
+
+    const color = await jie.getAttribute('data-match-color');
+    expect(color).toBeTruthy();
+
+    await expect(hun).toHaveAttribute('data-match-color', color!);
+  });
+});
 
 test.describe('HanziGrid Component', () => {
   test.beforeEach(async ({ page }) => {
@@ -7,13 +47,15 @@ test.describe('HanziGrid Component', () => {
     await page.goto('http://localhost:3000');
     
     // Close the "How To" dialog if it appears
-    const startButton = page.getByTestId('how-to-start-button');
+    // const startButton = page.getByTestId('how-to-start-button');
 
-    await expect(startButton).toBeVisible();
+    // await expect(startButton).toBeVisible();
 
-    await startButton.click()
+    // await startButton.click()
     
-    await page.getByTestId('how-to-dialog').waitFor({ state: 'detached' });
+    // await page.getByTestId('how-to-dialog').waitFor({ state: 'detached' });
+
+    await closeHowToDialog(page);
 
     const howToDialog = page.getByTestId('how-to-dialog');
     await expect(howToDialog).toHaveCount(0);
@@ -45,7 +87,7 @@ test.describe('HanziGrid Component', () => {
     await expect(tile0).toHaveAttribute('data-selected', 'true');
     
     // verify only one tile is selected
-    expect(await countSelectedTiles(page)).toBe(1); 
+    await expect(getSelectedTile(page)).toHaveCount(1); 
   });
 
   test('should deselect a tile when clicked twice', async ({ page }) => {
@@ -56,27 +98,27 @@ test.describe('HanziGrid Component', () => {
     await clickTileByIndex(page, 0);
     await expect(tile0).toHaveAttribute('data-selected', 'true');
 
-    expect(await countSelectedTiles(page)).toBe(1);
+    await expect(getSelectedTile(page)).toHaveCount(1); 
   
     // Deselect by clicking again
     await clickTileByIndex(page, 0);
     await expect(tile0).toHaveAttribute('data-selected', 'false');
     
     // Verify no tiles are selected
-    expect(await countSelectedTiles(page)).toBe(0);
+    await expect(getSelectedTile(page)).toHaveCount(0);
     
     // Select a different tile
     await clickTileByIndex(page, 1);
     await expect(tile1).toHaveAttribute('data-selected', 'true');
     
-    expect(await countSelectedTiles(page)).toBe(1);
+    await expect(getSelectedTile(page)).toHaveCount(1);
 
     // Deselect by clicking again
     await clickTileByIndex(page, 1);
     await expect(tile1).toHaveAttribute('data-selected', 'false');
     
     // Verify no tiles are selected
-    expect(await countSelectedTiles(page)).toBe(0);
+    await expect(getSelectedTile(page)).toHaveCount(0);
   });
 
   test('should show strikes counter', async ({ page }) => {
