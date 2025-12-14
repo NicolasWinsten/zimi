@@ -4,8 +4,9 @@ import GameView from "./game-view";
 import { useRef, useEffect, useReducer, useState } from "react";
 import { useStopwatch } from "react-timer-hook";
 import { initialGridState, gridReducer, gameIsFinished } from "./hanzi-grid";
-import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Box, Typography } from '@mui/material';
+import { Button, Typography } from '@mui/material';
 import HowToBox from 'app/ui/how-to-box';
+import MyDialog from 'app/ui/my-dialog';
 import { shareOnMobile } from "react-mobile-share";
 import WordList from "./word-list";
 
@@ -141,25 +142,19 @@ export default function GameSession({ words, shuffledChars, dateSeed, hskLevel }
     <div>
       {showHowTo && <HowToBox onClose={resumeGame} open={showHowTo} hskLevel={hskLevel}/>}
       
-      <Dialog open={showResumeModal} onClose={resumeGame} data-testid="resume-game-dialog">
-        <DialogTitle>Daily Zimi</DialogTitle>
-        <DialogContent>
-        { gameIsFinished(currentGameState) ?
-          "You have a completed game from today. Come back tomorrow for a new zimi!" :
-          "You have an in-progress game from today. Resume where you left off?"
-        }
-        {hskLevel && (
-          <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }} data-testid="resume-hsk-level">
-            Today's puzzle is HSK Level {hskLevel}
-          </Typography>
-        )}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={resumeGame} color="primary" variant="contained" data-testid="resume-game-button">
-            Okay!
-          </Button>
-        </DialogActions>
-      </Dialog>
+      <MyDialog
+        open={showResumeModal}
+        onClose={resumeGame}
+        title="Daily Zimi"
+        subTitle={hskLevel ? `Today's Puzzle: HSK Level ${hskLevel}` : undefined}
+        data-testid="resume-game-dialog"
+        children=
+            { gameIsFinished(currentGameState) ?
+              "You have a completed game from today. Come back tomorrow for a new zimi!" :
+              "You have an in-progress game from today. Resume where you left off?"
+            }
+        buttonContent={ gameIsFinished(currentGameState) ? "Look at scores" : "Resume" }
+      />
 
       <div className={`flex flex-col gap-4 items-center justify-center ${showHowTo || showResumeModal ? 'blur-sm pointer-events-none select-none' : ''}`}>
         <GameView

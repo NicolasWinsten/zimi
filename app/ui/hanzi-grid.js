@@ -23,7 +23,7 @@ export const gameIsFinished = (gameState) => {
 
 export function gridReducer(state, action) {
   switch(action.type) {
-    // TODO do we need this
+    // TODO do we need this?
     case 'reset': {
       return action.state;
     }
@@ -55,27 +55,6 @@ export function gridReducer(state, action) {
       return {...state, strikes: state.strikes + 1};
     }
     
-    // case 'shake': {
-    //   return produce(state, draft => {
-    //     action.tiles.forEach(t => {
-    //       draft.tileStates[t].shaking = true;
-    //     });
-    //   });
-    // }
-    // case 'clear-shake': {
-    //   return produce(state, draft => {
-    //     action.tiles.forEach(t => {
-    //       draft.tileStates[t].shaking = false;
-    //     })
-    //   });
-    // }
-    
-    // case 'select': {
-    //   return {...state, selectedTile: action.tile };
-    // }
-    // case 'deselect': {
-    //   return {...state, selectedTile: null };
-    // }
     default: {
       throw new Error(`Unhandled action type: ${action.type}`);
     }
@@ -118,7 +97,6 @@ export default function HanziGrid({ state, dispatch, gameBegun}) {
       dispatch({ type: 'unmatch', tile: index });
     }
     else if (selectedTile === index) {
-      // dispatch({ type: 'deselect' });
       setSelectedTile(null);
     }
     else if (selectedTile !== null) {
@@ -132,14 +110,11 @@ export default function HanziGrid({ state, dispatch, gameBegun}) {
         console.log(`${word} is NOT valid!`);
         // Trigger a shake + flash animation on both tiles, then clear and deselect
         const tiles = [selectedTile, index];
-        // dispatch({ type: 'shake', tiles });
         shakeTiles(tiles);
-        // dispatch({ type: 'deselect' });
         setSelectedTile(null);
         dispatch({ type: 'strike'});
       }
     } else {
-      // dispatch({ type: 'select', tile: index });
       setSelectedTile(index);
     }
   }
