@@ -12,70 +12,6 @@ import { shareOnMobile } from "react-mobile-share";
 import WordList from "./word-list";
 import { TimerFace } from "app/ui/timer";
 
-const makeShareableResultString = (gameState, milliseconds, dateSeed) => {
-  const totalSeconds = Math.floor(milliseconds / 1000);
-  const mins = Math.floor(totalSeconds / 60);
-  const secs = totalSeconds % 60;
-  const ms = milliseconds % 1000;
-  const timeStr = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}:${String(ms).padStart(3, '0')}`
-
-  const tileToEmoji = (tile) => tile.match !== null ? '🟩' : '🟥';
-  const date = new Date(dateSeed);
-
-  const grid = gameState.tileStates.map((tile, index) => {
-    const isEndOfRow = (index + 1) % 4 === 0;
-    return tileToEmoji(tile) + (isEndOfRow ? '\n' : '');
-  }).join('');
-
-  return `My Daily Zimi\n${date.toDateString()}\n${grid}\n${'❌'.repeat(gameState.strikes)} ${gameState.strikes === 3 ? '😭' : timeStr}\n`
-}
-
-/**
- * Save a snapshot of the current game state to localStorage
- * @param {*} gameState 
- * @param {*} milliseconds 
- * @param {*} dateSeed 
- * @param {*} words - array of words for this game
- */
-function saveLocalState(gameState, milliseconds, dateSeed, words) {
-  console.log('Saving game state to localStorage...', gameState, milliseconds, dateSeed);
-  const objectToStore = { game: gameState, milliseconds, date: dateSeed, words };
-  try {
-    localStorage.setItem("zimi-save", JSON.stringify(objectToStore));
-  } catch (e) {
-    console.error('Failed to save game state to localStorage:', e);
-  }
-}
-
-/**
- * 
- * @param {string} dateSeed retrieve last saved game state for this date
- * @param {Array<string>} currentWords - the word list for the current game
- * @returns { game: grid state, milliseconds: number } | null
- */
-function retrieveLocalState(dateStr, currentWords) {
-  try {
-    const savedData = JSON.parse(localStorage.getItem("zimi-save"));
-    console.log('Retrieved raw saved data:', savedData);
-    
-    if (!savedData || savedData.date !== dateStr) {
-      console.log('No saved game state for', dateStr);
-      return null;
-    }
-    
-    const wordListMatch = JSON.stringify(savedData.words) === JSON.stringify(currentWords);
-    if (!wordListMatch) {
-      console.log('Saved word list does not match current word list. Saved:', savedData.words, 'Current:', currentWords);
-      return null;
-    }
-
-    return savedData
-  } catch (e) {
-    console.error('Failed to retrieve game state:', e);
-    return null;
-  }
-}
-
 function StrikesIndicator({ strikes }) {
   return (
     <Box data-testid="strikes-indicator" sx={{ display: 'flex', gap: 1 }}>
@@ -125,119 +61,19 @@ function TimerDisplay({ stopWatch }) {
   );
 }
 
-export default function GameView({ words, shuffledChars, dateSeed, hskLevel }) {
-  const [ currentGameState, dispatch ] = useReducer(gridReducer, initialGridState(shuffledChars));
-
-  const [showHowTo, setShowHowTo] = useState(true);
-  const [showResumeModal, setShowResumeModal] = useState(false);
-  const [lastSaveTime, setLastSaveTime] = useState(Date.now());
-  const [gameBegun, setGameBegun] = useState(false);
-
-  // Initialize stopwatch with saved time if resuming
-  const stopWatch = useStopwatch({ 
-    autoStart: false, 
-    interval: 20,
-  });
-
-  function getMilliseconds() {
-    return stopWatch.totalSeconds * 1000 + stopWatch.milliseconds;
-  }
-
-  // upon mounting, check for saved game state in localStorage
-  useEffect(() => {
-    const savedGame = retrieveLocalState(dateSeed, words);
-    if (savedGame) {
-      dispatch({ type: 'reset', state: savedGame.game });
-      stopWatch.reset(new Date(Date.now() + savedGame.milliseconds), false);
-      setShowHowTo(false);
-      setShowResumeModal(true);
-    } else {
-      setShowHowTo(true);
-      setShowResumeModal(false);
-    }
-  }, [dateSeed, words]);
-
-  // Continuously save stopwatch value while timer is running every second
-  useEffect(() => {
-    if (Date.now() - lastSaveTime > 1000 && stopWatch.isRunning) {
-      saveLocalState(currentGameState, getMilliseconds(), dateSeed, words);
-      setLastSaveTime(Date.now());
-    }
-  }, [stopWatch, currentGameState]);
-
-  useEffect(() => {
-    // save game state when it changes
-    if (gameIsFinished(currentGameState)) stopWatch.pause();
-    // only save if the game was actually played
-    if (getMilliseconds() > 0) saveLocalState(currentGameState, getMilliseconds(), dateSeed, words);
-  }, [currentGameState.tileStates, currentGameState.strikes, dateSeed, words]);
-
-
-  function resumeGame() {
-    setShowResumeModal(false);
-    setShowHowTo(false);
-    if (!gameIsFinished(currentGameState)) {
-      stopWatch.start();
-      setGameBegun(true);
-    }
-  }
+export default function GameView({ gameState, dispatch, timer, gameBegun }) {
 
   return (
-    <div>
-      {showHowTo && <HowToBox onClose={resumeGame} open={showHowTo} hskLevel={hskLevel}/>}
-      
-      <Dialog open={showResumeModal} onClose={resumeGame} data-testid="resume-game-dialog">
-        <DialogTitle>Daily Zimi</DialogTitle>
-        <DialogContent>
-        { gameIsFinished(currentGameState) ?
-          "You have a completed game from today. Come back tomorrow for a new zimi!" :
-          "You have an in-progress game from today. Resume where you left off?"
-        }
-        {hskLevel && (
-          <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }} data-testid="resume-hsk-level">
-            Today's puzzle is HSK Level {hskLevel}
-          </Typography>
-        )}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={resumeGame} color="primary" variant="contained" data-testid="resume-game-button">
-            Okay!
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      <div className={`flex items-center justify-center ${showHowTo || showResumeModal ? 'blur-sm pointer-events-none select-none' : ''}`}>
-        <div className="flex flex-col items-center justify-center gap-4">
-          <HanziGrid
-            state={currentGameState}
-            dispatch={dispatch}
-            gameBegun={gameBegun}
-          />
-          <div className="flex gap-4 items-center justify-center h-8">
-            <StrikesIndicator strikes={currentGameState.strikes} />
-            <TimerDisplay stopWatch={stopWatch} />
-          </div>
-          { gameIsFinished(currentGameState) && (
-            <Button
-              data-testid="share-results-button"
-              variant="contained"
-              color="primary"
-              onClick={() => {
-                shareOnMobile({
-                  title: 'My Daily Zimi',
-                  text: makeShareableResultString(currentGameState, getMilliseconds(), dateSeed),
-                  url: "https://zimi-ten.vercel.app/"
-                }, console.error)
-              }}
-              >
-                Share your results
-              </Button>
-          ) }
-            
+      <div className="flex flex-col items-center justify-center gap-4">
+        <HanziGrid
+          state={gameState}
+          dispatch={dispatch}
+          gameBegun={gameBegun}
+        />
+        <div className="flex gap-4 items-center justify-center h-8">
+          <StrikesIndicator strikes={gameState.strikes} />
+          <TimerDisplay stopWatch={timer} />
         </div>
-        {/* <PlayerList players={leaderboard} dataFn={player => player.milliseconds} /> */}
       </div>
-      { gameIsFinished(currentGameState) && <WordList words={words} /> }
-    </div>
   )
 }

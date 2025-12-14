@@ -1,4 +1,4 @@
-import GameView from "app/ui/game-view";
+import GameSession from "app/ui/game-session";
 import ErrorPage from "app/ui/error-page";
 import { getRandomWords, isValidWord } from "app/lib/dictionary"; 
 import { currentDateStr, mkDateStr, sample, getDailyDifficulty } from "app/lib/utils";
@@ -56,7 +56,7 @@ export default async function Page(props) {
 
   return (
       <div>
-        <GameView key={dateSeed} words={todaysWords} shuffledChars={shuffledChars} dateSeed={dateSeed} hskLevel={hskLevel} />
+        <GameSession key={dateSeed} words={todaysWords} shuffledChars={shuffledChars} dateSeed={dateSeed} hskLevel={hskLevel} />
       </div>
   );
 }
