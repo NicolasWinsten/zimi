@@ -5,19 +5,12 @@
 'use client';
 import { useRef, useEffect, useReducer, useState } from "react";
 import HowToBox from './how-to-box';
-import HanziGrid, { initialGridState, gridReducer } from "./hanzi-grid";
+import HanziGrid, { initialGridState, gridReducer, gameIsFinished } from "./hanzi-grid";
 import { useStopwatch } from "react-timer-hook";
-import PlayerList from "app/ui/player-list";
-import { getTopScores, submitDailyScore } from "../lib/db/db";
-import { currentDateSeed } from "app/lib/utils";
 import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Box, Typography } from '@mui/material';
 import { shareOnMobile } from "react-mobile-share";
 import WordList from "./word-list";
 import { TimerFace } from "app/ui/timer";
-
-const gameIsFinished = (gameState) => {
-  return gameState.completed || gameState.strikes == 3;
-}
 
 const makeShareableResultString = (gameState, milliseconds, dateSeed) => {
   const totalSeconds = Math.floor(milliseconds / 1000);
@@ -138,7 +131,7 @@ export default function GameView({ words, shuffledChars, dateSeed, hskLevel }) {
   const [showHowTo, setShowHowTo] = useState(true);
   const [showResumeModal, setShowResumeModal] = useState(false);
   const [lastSaveTime, setLastSaveTime] = useState(Date.now());
-  const [playedFailAnimation, setPlayedFailAnimation] = useState(false);
+  const [gameBegun, setGameBegun] = useState(false);
 
   // Initialize stopwatch with saved time if resuming
   const stopWatch = useStopwatch({ 
@@ -158,7 +151,6 @@ export default function GameView({ words, shuffledChars, dateSeed, hskLevel }) {
       stopWatch.reset(new Date(Date.now() + savedGame.milliseconds), false);
       setShowHowTo(false);
       setShowResumeModal(true);
-      setPlayedFailAnimation(savedGame.game.strikes === 3);
     } else {
       setShowHowTo(true);
       setShowResumeModal(false);
@@ -173,19 +165,7 @@ export default function GameView({ words, shuffledChars, dateSeed, hskLevel }) {
     }
   }, [stopWatch, currentGameState]);
 
-  function failAnimation() {
-    let tiles = currentGameState.tileStates.map((t, i) => i);
-    dispatch({ type: 'shake', tiles });
-    setTimeout(() => {
-      dispatch({ type: 'clear-shake', tiles });
-    }, 500);
-  }
-
   useEffect(() => {
-    if (currentGameState.strikes === 3 && !playedFailAnimation) {
-      failAnimation();
-      setPlayedFailAnimation(true);
-    }
     // save game state when it changes
     if (gameIsFinished(currentGameState)) stopWatch.pause();
     // only save if the game was actually played
@@ -196,7 +176,10 @@ export default function GameView({ words, shuffledChars, dateSeed, hskLevel }) {
   function resumeGame() {
     setShowResumeModal(false);
     setShowHowTo(false);
-    if (!gameIsFinished(currentGameState)) stopWatch.start();
+    if (!gameIsFinished(currentGameState)) {
+      stopWatch.start();
+      setGameBegun(true);
+    }
   }
 
   return (
@@ -228,6 +211,7 @@ export default function GameView({ words, shuffledChars, dateSeed, hskLevel }) {
           <HanziGrid
             state={currentGameState}
             dispatch={dispatch}
+            gameBegun={gameBegun}
           />
           <div className="flex gap-4 items-center justify-center h-8">
             <StrikesIndicator strikes={currentGameState.strikes} />
