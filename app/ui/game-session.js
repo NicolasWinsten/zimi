@@ -79,6 +79,10 @@ function retrieveLocalState(dateStr, currentWords) {
   }
 }
 
+function timerTotalMilliseconds(stopWatch) {
+  return stopWatch.totalSeconds * 1000 + stopWatch.milliseconds;
+}
+
 export default function GameSession({ words, shuffledChars, dateSeed, hskLevel, preventStorage, preventRestore }) {
   const [ currentGameState, dispatch ] = useReducer(gridReducer, initialGridState(shuffledChars));
   const { data: session, status } = useSession();
@@ -97,10 +101,6 @@ export default function GameSession({ words, shuffledChars, dateSeed, hskLevel, 
     autoStart: false, 
     interval: 20,
   });
-
-  function getMilliseconds() {
-    return stopWatch.totalSeconds * 1000 + stopWatch.milliseconds;
-  }
 
   // Function to submit score to backend
   const submitScore = (milliseconds) => {
@@ -145,7 +145,7 @@ export default function GameSession({ words, shuffledChars, dateSeed, hskLevel, 
   useEffect(() => {
     if (gameIsFinished(currentGameState)) stopWatch.pause();
     // only save if the game was actually played
-    if (gameBegun && !preventStorage) saveLocalState(currentGameState, getMilliseconds(), dateSeed, words);
+    if (gameBegun && !preventStorage) saveLocalState(currentGameState, timerTotalMilliseconds(stopWatch), dateSeed, words);
   }, [currentGameState, dateSeed, words]);
 
   // Submit score when game is finished
@@ -153,7 +153,7 @@ export default function GameSession({ words, shuffledChars, dateSeed, hskLevel, 
     if (gameIsFinished(currentGameState) && gameBegun && !scoreSubmitted) {
       setScoreSubmitted(true);
       const completed = gameIsCompleted(currentGameState);
-      const milliseconds = completed ? getMilliseconds() : null;
+      const milliseconds = completed ? timerTotalMilliseconds(stopWatch) : null;
       
       if (status === 'authenticated') {
         // User is logged in, submit score immediately
@@ -187,7 +187,7 @@ export default function GameSession({ words, shuffledChars, dateSeed, hskLevel, 
   useEffect(() => {
     const handleBeforeUnload = (e) => {
       if (gameBegun && !gameIsFinished(currentGameState) && !preventStorage) {
-        saveLocalState(currentGameState, getMilliseconds(), dateSeed, words);
+        saveLocalState(currentGameState, timerTotalMilliseconds(stopWatch), dateSeed, words);
       }
     };
 
@@ -254,7 +254,7 @@ export default function GameSession({ words, shuffledChars, dateSeed, hskLevel, 
             onClick={() => {
               shareOnMobile({
                 title: 'My Daily Zimi',
-                text: makeShareableResultString(currentGameState, getMilliseconds(), dateSeed),
+                text: makeShareableResultString(currentGameState, timerTotalMilliseconds(stopWatch), dateSeed),
                 url: "https://zimi-ten.vercel.app/"
               }, console.error)
             }}
