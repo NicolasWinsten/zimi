@@ -6,7 +6,11 @@
 import postgres from 'postgres';
 
 // Test database connection - use default import
-const sql = postgres(process.env.TEST_DATABASE_URL || process.env.POSTGRES_URL || '', { ssl: 'require' });
+const dbUrl = process.env.TEST_DATABASE_URL || process.env.POSTGRES_URL;
+if (!dbUrl) {
+  throw new Error('TEST_DATABASE_URL or POSTGRES_URL environment variable must be set for database tests');
+}
+const sql = postgres(dbUrl, { ssl: 'require' });
 
 export interface TestUser {
   id: number;
@@ -195,7 +199,15 @@ export async function verifyStreak(
 
   const currentMatches = streak.current_streak_length === expectedCurrentStreak;
   const longestMatches = streak.longest_streak_length === expectedLongestStreak;
-  const dateMatches = expectedLastDate ? streak.current_streak_last_date.toISOString().split('T')[0] === expectedLastDate : true;
+  
+  // Handle date comparison - could be Date object or string from database
+  let dateMatches = true;
+  if (expectedLastDate) {
+    const lastDateStr = streak.current_streak_last_date instanceof Date 
+      ? streak.current_streak_last_date.toISOString().split('T')[0]
+      : String(streak.current_streak_last_date).split('T')[0];
+    dateMatches = lastDateStr === expectedLastDate;
+  }
 
   return currentMatches && longestMatches && dateMatches;
 }

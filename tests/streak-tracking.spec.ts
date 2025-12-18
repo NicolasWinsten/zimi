@@ -54,6 +54,18 @@ function getTodayDateString(): string {
   return new Date().toISOString().split('T')[0];
 }
 
+// Helper to wait for score to be recorded in database
+async function waitForScoreRecorded(userId: number, date: string, maxWaitMs: number = 3000): Promise<boolean> {
+  const startTime = Date.now();
+  while (Date.now() - startTime < maxWaitMs) {
+    if (await verifyScoreSubmitted(userId, date)) {
+      return true;
+    }
+    await new Promise(resolve => setTimeout(resolve, 100));
+  }
+  return false;
+}
+
 test.describe('Streak Tracking - Authenticated User (Already Logged In)', () => {
   test.beforeEach(async ({ page }) => {
     // Reset test database before each test
@@ -67,7 +79,7 @@ test.describe('Streak Tracking - Authenticated User (Already Logged In)', () => 
     const today = getTodayDateString();
     
     // Navigate to game with simple 2-character word
-    await page.goto('http://localhost:3000/?dev=true&words=你好&preventRestore=true');
+    await page.goto('/?dev=true&words=你好&preventRestore=true');
     
     // Complete the puzzle
     await completePuzzle(page, '你好');
@@ -79,9 +91,8 @@ test.describe('Streak Tracking - Authenticated User (Already Logged In)', () => 
     const streakText = await page.getByTestId('streak-length').textContent();
     expect(streakText).toContain('4');
     
-    // Verify database was updated correctly
-    // Give it a moment for async operations to complete
-    await page.waitForTimeout(1000);
+    // Wait for score to be recorded in database
+    await waitForScoreRecorded(1, today);
     
     // Check that score was submitted
     const scoreSubmitted = await verifyScoreSubmitted(1, today);
@@ -96,10 +107,10 @@ test.describe('Streak Tracking - Authenticated User (Already Logged In)', () => 
     const today = getTodayDateString();
     
     // First completion
-    await page.goto('http://localhost:3000/?dev=true&words=你好&preventRestore=true');
+    await page.goto('/?dev=true&words=你好&preventRestore=true');
     await completePuzzle(page, '你好');
     await expect(page.getByTestId('streak-popup')).toBeVisible({ timeout: 5000 });
-    await page.waitForTimeout(1000);
+    await waitForScoreRecorded(1, today);
     
     // Get the first score
     const streak1 = await getUserStreak(1);
@@ -107,15 +118,17 @@ test.describe('Streak Tracking - Authenticated User (Already Logged In)', () => 
     
     // Close streak popup
     await page.getByTestId('streak-popup').click();
-    await page.waitForTimeout(500);
+    await expect(page.getByTestId('streak-popup')).not.toBeVisible();
     
     // Try to complete again (simulate clearing cookies and playing again)
-    await page.goto('http://localhost:3000/?dev=true&words=测试&preventRestore=true&preventStorage=true');
+    await page.goto('/?dev=true&words=测试&preventRestore=true&preventStorage=true');
     await completePuzzle(page, '测试');
     
     // Streak popup should appear again
     await expect(page.getByTestId('streak-popup')).toBeVisible({ timeout: 5000 });
-    await page.waitForTimeout(1000);
+    
+    // Give API call a moment to complete
+    await new Promise(resolve => setTimeout(resolve, 500));
     
     // But streak should not increase (still same as before)
     const streak2 = await getUserStreak(1);
@@ -132,7 +145,7 @@ test.describe('Streak Tracking - Authenticated User (Already Logged In)', () => 
     
     const today = getTodayDateString();
     
-    await page.goto('http://localhost:3000/?dev=true&words=世界&preventRestore=true');
+    await page.goto('/?dev=true&words=世界&preventRestore=true');
     await completePuzzle(page, '世界');
     
     await expect(page.getByTestId('streak-popup')).toBeVisible({ timeout: 5000 });
@@ -141,7 +154,7 @@ test.describe('Streak Tracking - Authenticated User (Already Logged In)', () => 
     const streakText = await page.getByTestId('streak-length').textContent();
     expect(streakText).toContain('1');
     
-    await page.waitForTimeout(1000);
+    await waitForScoreRecorded(1, today);
     
     // Verify streak was reset to 1, but longest streak is preserved (10)
     const streakValid = await verifyStreak(2, 1, 10, today);
@@ -151,7 +164,7 @@ test.describe('Streak Tracking - Authenticated User (Already Logged In)', () => 
   test('should record failed game (3 strikes) with null score', async ({ page }) => {
     const today = getTodayDateString();
     
-    await page.goto('http://localhost:3000/?dev=true&words=你好&preventRestore=true');
+    await page.goto('/?dev=true&words=你好&preventRestore=true');
     await closeHowToDialog(page);
     
     // Make 3 incorrect guesses to get 3 strikes
@@ -161,18 +174,19 @@ test.describe('Streak Tracking - Authenticated User (Already Logged In)', () => 
     await tiles[0].click();
     await tiles[1].click(); // This should create a strike if not matching
     
-    await page.waitForTimeout(500);
+    // Wait for shake animation to complete
+    await page.waitForFunction(() => !document.querySelector('[data-shaking="true"]'), { timeout: 1000 }).catch(() => {});
     
     await tiles[0].click();
     await tiles[1].click();
     
-    await page.waitForTimeout(500);
+    await page.waitForFunction(() => !document.querySelector('[data-shaking="true"]'), { timeout: 1000 }).catch(() => {});
     
     await tiles[0].click();
     await tiles[1].click();
     
-    // Wait for game to be marked as finished
-    await page.waitForTimeout(2000);
+    // Wait for strikes indicator to show 3 strikes
+    await expect(page.getByTestId('strikes-indicator').locator('[data-strike-active="true"]')).toHaveCount(3, { timeout: 3000 });
     
     // No streak popup should appear (user failed)
     await expect(page.getByTestId('streak-popup')).not.toBeVisible();
@@ -202,7 +216,7 @@ test.describe('Streak Tracking - Unauthenticated User (Login After Completion)',
       });
     });
     
-    await page.goto('http://localhost:3000/?dev=true&words=朋友&preventRestore=true');
+    await page.goto('/?dev=true&words=朋友&preventRestore=true');
     await completePuzzle(page, '朋友');
     
     // Login prompt should appear
@@ -242,7 +256,7 @@ test.describe('Streak Tracking - Unauthenticated User (Login After Completion)',
     });
     
     // Complete puzzle while unauthenticated
-    await page.goto('http://localhost:3000/?dev=true&words=学习&preventRestore=true');
+    await page.goto('/?dev=true&words=学习&preventRestore=true');
     await completePuzzle(page, '学习');
     
     // Login prompt should appear
@@ -252,8 +266,8 @@ test.describe('Streak Tracking - Unauthenticated User (Login After Completion)',
     isAuthenticated = true;
     await page.reload();
     
-    // Wait for page to load and check for authentication
-    await page.waitForTimeout(2000);
+    // Wait for page to load - grid should be visible
+    await expect(page.getByTestId('hanzi-grid')).toBeVisible({ timeout: 5000 });
     
     // After reload with auth, streak popup should appear
     await expect(page.getByTestId('streak-popup')).toBeVisible({ timeout: 5000 });
@@ -262,7 +276,7 @@ test.describe('Streak Tracking - Unauthenticated User (Login After Completion)',
     const streakText = await page.getByTestId('streak-length').textContent();
     expect(streakText).toContain('1');
     
-    await page.waitForTimeout(1000);
+    await waitForScoreRecorded(1, today);
     
     // Verify score was submitted for User 3
     const scoreSubmitted = await verifyScoreSubmitted(3, today);
@@ -281,7 +295,7 @@ test.describe('Streak Display', () => {
   });
 
   test('should display correct streak information in popup', async ({ page }) => {
-    await page.goto('http://localhost:3000/?dev=true&words=开心&preventRestore=true');
+    await page.goto('/?dev=true&words=开心&preventRestore=true');
     await completePuzzle(page, '开心');
     
     const streakPopup = page.getByTestId('streak-popup');
@@ -300,7 +314,7 @@ test.describe('Streak Display', () => {
     // User 3 has no streak yet
     await mockAuthSession(page, 3);
     
-    await page.goto('http://localhost:3000/?dev=true&words=快乐&preventRestore=true');
+    await page.goto('/?dev=true&words=快乐&preventRestore=true');
     await completePuzzle(page, '快乐');
     
     const streakPopup = page.getByTestId('streak-popup');
@@ -311,7 +325,7 @@ test.describe('Streak Display', () => {
   });
 
   test('should show "Streak Updated!" for continuing streak', async ({ page }) => {
-    await page.goto('http://localhost:3000/?dev=true&words=努力&preventRestore=true');
+    await page.goto('/?dev=true&words=努力&preventRestore=true');
     await completePuzzle(page, '努力');
     
     const streakPopup = page.getByTestId('streak-popup');
