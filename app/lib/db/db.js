@@ -43,6 +43,120 @@ export async function submitDailyScore(milliseconds) {
   return result 
 }
 
+/**
+ * Get the user's current streak information
+ * @returns {Promise<{current_streak_length: number, longest_streak_length: number, current_streak_last_date: string} | null>}
+ */
+export async function getStreak() {
+  const session = await getServerSession(authOptions);
+
+  if (session == null) {
+    return null;
+  }
+
+  const result = await sql`
+    SELECT current_streak_length, longest_streak_length, current_streak_last_date
+    FROM streaks
+    WHERE user_id = (select id from users where email = ${session.user.email})
+  `;
+
+  return result.length > 0 ? result[0] : null;
+}
+
+/**
+ * Update the user's streak after completing today's puzzle
+ * @param {boolean} completed - whether the user completed the puzzle (true) or failed (false)
+ * @returns {Promise<{current_streak_length: number, longest_streak_length: number}>}
+ */
+export async function updateStreak(completed) {
+  const session = await getServerSession(authOptions);
+
+  if (session == null) {
+    throw new Error('User not authenticated');
+  }
+
+  const userId = await sql`select id from users where email = ${session.user.email}`;
+  
+  if (userId.length === 0) {
+    throw new Error('User not found');
+  }
+
+  const userIdValue = userId[0].id;
+
+  // Get current streak data
+  const currentStreak = await sql`
+    SELECT current_streak_length, longest_streak_length, current_streak_last_date
+    FROM streaks
+    WHERE user_id = ${userIdValue}
+  `;
+
+  let newStreakLength = 1;
+  let longestStreak = 1;
+
+  if (completed) {
+    if (currentStreak.length > 0) {
+      const lastDate = currentStreak[0].current_streak_last_date;
+      const yesterday = new Date();
+      yesterday.setDate(yesterday.getDate() - 1);
+      const yesterdayStr = yesterday.toISOString().split('T')[0];
+      
+      // Check if last completion was yesterday
+      if (lastDate === yesterdayStr) {
+        // Continue the streak
+        newStreakLength = currentStreak[0].current_streak_length + 1;
+      } else if (lastDate === new Date().toISOString().split('T')[0]) {
+        // Already completed today, don't update
+        return {
+          current_streak_length: currentStreak[0].current_streak_length,
+          longest_streak_length: currentStreak[0].longest_streak_length,
+        };
+      }
+      // If last date is neither yesterday nor today, streak resets to 1
+      
+      longestStreak = Math.max(newStreakLength, currentStreak[0].longest_streak_length);
+    }
+
+    // Update or insert streak
+    const result = await sql`
+      INSERT INTO streaks (user_id, current_streak_length, longest_streak_length, current_streak_last_date)
+      VALUES (${userIdValue}, ${newStreakLength}, ${longestStreak}, CURRENT_DATE)
+      ON CONFLICT (user_id) 
+      DO UPDATE SET 
+        current_streak_length = ${newStreakLength},
+        longest_streak_length = ${longestStreak},
+        current_streak_last_date = CURRENT_DATE
+      RETURNING current_streak_length, longest_streak_length;
+    `;
+
+    console.log(`${session.user.email} streak updated: ${newStreakLength} (longest: ${longestStreak})`);
+    return result[0];
+  } else {
+    // Failed to complete - reset streak to 0
+    if (currentStreak.length > 0) {
+      await sql`
+        UPDATE streaks
+        SET current_streak_length = 0,
+            current_streak_last_date = CURRENT_DATE
+        WHERE user_id = ${userIdValue}
+      `;
+      return {
+        current_streak_length: 0,
+        longest_streak_length: currentStreak[0].longest_streak_length,
+      };
+    } else {
+      // No existing streak record, insert with 0
+      await sql`
+        INSERT INTO streaks (user_id, current_streak_length, longest_streak_length, current_streak_last_date)
+        VALUES (${userIdValue}, 0, 0, CURRENT_DATE)
+      `;
+      return {
+        current_streak_length: 0,
+        longest_streak_length: 0,
+      };
+    }
+  }
+}
+
 // async function seedUsers() {
 //   await sql`CREATE EXTENSION IF NOT EXISTS "uuid-ossp"`;
 //   await sql`

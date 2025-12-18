@@ -31,7 +31,7 @@ export default function RootLayout({ children }) {
                     <DatePicker />
                     <DailyTimer />
                     <HelpButton />
-                    {/* <UserMenu /> */}
+                    <UserMenu />
                   </div>
                 </div>
               </div>
