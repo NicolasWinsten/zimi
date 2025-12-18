@@ -159,7 +159,7 @@ export default function GameSession({ words, shuffledChars, dateSeed, hskLevel, 
   useEffect(() => {
     if (gameIsFinished(currentGameState)) stopWatch.pause();
     // only save if the game was actually played
-    if (gameBegun && !preventStorage) saveLocalState(currentGameState, getMilliseconds(), dateSeed, words);
+    if (gameBegun && !preventStorage) saveLocalState(currentGameState, getMilliseconds(), dateSeed, words, scoreSubmitted);
   }, [currentGameState, dateSeed, words]);
 
   // Submit score when game is finished
@@ -185,7 +185,7 @@ export default function GameSession({ words, shuffledChars, dateSeed, hskLevel, 
   useEffect(() => {
     const handleBeforeUnload = (e) => {
       if (gameBegun && !gameIsFinished(currentGameState) && !preventStorage) {
-        saveLocalState(currentGameState, getMilliseconds(), dateSeed, words);
+        saveLocalState(currentGameState, getMilliseconds(), dateSeed, words, false);
       }
     };
 
