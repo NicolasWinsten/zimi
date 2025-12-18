@@ -79,7 +79,7 @@ function retrieveLocalState(dateStr, currentWords) {
   }
 }
 
-export default function GameSession({ words, shuffledChars, dateSeed, hskLevel }) {
+export default function GameSession({ words, shuffledChars, dateSeed, hskLevel, preventStorage, preventRestore }) {
   const [ currentGameState, dispatch ] = useReducer(gridReducer, initialGridState(shuffledChars));
   const { data: session, status } = useSession();
   
@@ -103,7 +103,7 @@ export default function GameSession({ words, shuffledChars, dateSeed, hskLevel }
 
   // upon mounting, check for saved game state in localStorage
   useEffect(() => {
-    const savedGame = retrieveLocalState(dateSeed, words);
+    const savedGame = preventRestore ? null : retrieveLocalState(dateSeed, words);
     if (savedGame) {
       dispatch({ type: 'reset', state: savedGame.game });
       stopWatch.reset(new Date(Date.now() + savedGame.milliseconds), false);
@@ -120,7 +120,7 @@ export default function GameSession({ words, shuffledChars, dateSeed, hskLevel }
   useEffect(() => {
     if (gameIsFinished(currentGameState)) stopWatch.pause();
     // only save if the game was actually played
-    if (gameBegun) saveLocalState(currentGameState, getMilliseconds(), dateSeed, words);
+    if (gameBegun && !preventStorage) saveLocalState(currentGameState, getMilliseconds(), dateSeed, words);
   }, [currentGameState, dateSeed, words]);
 
   // Submit score when game is finished
@@ -161,7 +161,7 @@ export default function GameSession({ words, shuffledChars, dateSeed, hskLevel }
   // set up callback to run beforeunload to save game state (save the user's time if they leave mid-game)
   useEffect(() => {
     const handleBeforeUnload = (e) => {
-      if (gameBegun && !gameIsFinished(currentGameState)) {
+      if (gameBegun && !gameIsFinished(currentGameState) && !preventStorage) {
         saveLocalState(currentGameState, getMilliseconds(), dateSeed, words);
       }
     };
