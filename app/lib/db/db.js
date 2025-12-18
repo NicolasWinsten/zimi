@@ -98,8 +98,7 @@ export async function updateStreak(completed) {
       const lastDateObj = new Date(currentStreak[0].current_streak_last_date);
       const lastDateStr = lastDateObj.toISOString().split('T')[0];
       
-      const yesterday = new Date();
-      yesterday.setDate(yesterday.getDate() - 1);
+      const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000);
       const yesterdayStr = yesterday.toISOString().split('T')[0];
       
       const todayStr = new Date().toISOString().split('T')[0];
