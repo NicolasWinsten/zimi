@@ -11,6 +11,7 @@ export default function StreakPopup({ open, onClose, streakLength, isNewStreak }
       onClose={onClose}
       maxWidth="xs"
       fullWidth
+      data-testid="streak-popup"
       PaperProps={{
         sx: {
           borderRadius: 2,
@@ -31,7 +32,7 @@ export default function StreakPopup({ open, onClose, streakLength, isNewStreak }
           <Typography variant="h5" sx={{ fontWeight: 'bold', mb: 1 }}>
             {isNewStreak ? 'Streak Started!' : 'Streak Updated!'}
           </Typography>
-          <Typography variant="h4" sx={{ fontWeight: 'bold', color: '#9333ea', mb: 2 }}>
+          <Typography variant="h4" sx={{ fontWeight: 'bold', color: '#9333ea', mb: 2 }} data-testid="streak-length">
             {streakLength} {streakLength === 1 ? 'Day' : 'Days'}
           </Typography>
           <Typography variant="body2" color="text.secondary">

@@ -23,6 +23,7 @@ export default function LoginPromptModal({ open, onClose }) {
       onClose={onClose}
       maxWidth="sm"
       fullWidth
+      data-testid="login-prompt-modal"
       PaperProps={{
         className: 'bg-white rounded-lg border-4 border-purple-500 p-4'
       }}
@@ -62,6 +63,7 @@ export default function LoginPromptModal({ open, onClose }) {
           variant="contained" 
           color="primary" 
           fullWidth
+          data-testid="sign-in-button"
           sx={{ maxWidth: 300 }}
         >
           Sign In to Start Tracking
