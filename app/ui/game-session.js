@@ -104,7 +104,7 @@ export default function GameSession({ words, shuffledChars, dateSeed, hskLevel, 
 
   // Function to submit score to backend
   const submitScore = (milliseconds) => {
-    fetch('/api/submit-score', {
+    return fetch('/api/submit-score', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -118,9 +118,11 @@ export default function GameSession({ words, shuffledChars, dateSeed, hskLevel, 
           setStreakData(data.streak);
           setTimeout(() => setShowStreakPopup(true), 500);
         }
+        return data;
       })
       .catch(error => {
-        console.error('Error submitting score:', error);
+        console.error('Error submitting score:', error.message || error);
+        throw error;
       });
   };
 
@@ -169,10 +171,15 @@ export default function GameSession({ words, shuffledChars, dateSeed, hskLevel, 
   // Submit pending score when user authenticates
   useEffect(() => {
     if (status === 'authenticated' && pendingScore !== null) {
-      console.log('User authenticated, submitting pending score:', pendingScore);
-      submitScore(pendingScore);
-      setPendingScore(null); // Clear pending score after submission
-      setShowLoginPrompt(false); // Close login prompt if still open
+      submitScore(pendingScore)
+        .then(() => {
+          setPendingScore(null); // Clear pending score only after successful submission
+          setShowLoginPrompt(false); // Close login prompt if still open
+        })
+        .catch(error => {
+          console.error('Failed to submit pending score after authentication:', error);
+          // Keep pending score for potential retry
+        });
     }
   }, [status, pendingScore]);
 
