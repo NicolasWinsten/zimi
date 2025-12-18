@@ -8,6 +8,7 @@ import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import Divider from '@mui/material/Divider';
 import ListItemText from '@mui/material/ListItemText';
+import { Typography } from '@mui/material';
 
 function SignInOutMenuItem({status}) {
   if (status === "authenticated") {
@@ -36,7 +37,6 @@ export default function UserMenu() {
 
   return (
     <div className='flex'>
-      {session && (<p>{session.user.name}</p>)}
       <IconButton
         onClick={handleOpen}
         size="small"
@@ -57,6 +57,7 @@ export default function UserMenu() {
         transformOrigin={{ horizontal: 'right', vertical: 'top' }}
         anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
       >
+        {session && (<MenuItem>{session.user.name}</MenuItem>)}
         <SignInOutMenuItem status={status}/>
       </Menu>
     </div>

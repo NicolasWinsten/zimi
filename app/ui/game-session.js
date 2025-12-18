@@ -39,11 +39,10 @@ const makeShareableResultString = (gameState, milliseconds, dateSeed) => {
  * @param {*} milliseconds 
  * @param {*} dateSeed 
  * @param {*} words - array of words for this game
- * @param {*} scoreSubmitted - whether the score has been submitted
  */
-function saveLocalState(gameState, milliseconds, dateSeed, words, scoreSubmitted = false) {
+function saveLocalState(gameState, milliseconds, dateSeed, words) {
   console.log('Saving game state to localStorage...', gameState, milliseconds, dateSeed);
-  const objectToStore = { game: gameState, milliseconds, date: dateSeed, words, scoreSubmitted };
+  const objectToStore = { game: gameState, milliseconds, date: dateSeed, words };
   try {
     localStorage.setItem("zimi-save", JSON.stringify(objectToStore));
   } catch (e) {
@@ -52,10 +51,36 @@ function saveLocalState(gameState, milliseconds, dateSeed, words, scoreSubmitted
 }
 
 /**
+ * Flag in localStorage that score has been submitted for this date
+ * @param {string} dateSeed 
+ */
+function rememberScoreSubmitted(dateSeed) {
+  try {
+    localStorage.setItem("submitted", dateSeed);
+  } catch (e) {
+    console.error('Failed to remember score submission:', e);
+  }
+}
+
+/**
+ * Check if score has already been submitted for this date
+ * @param {string} dateSeed 
+ * @returns {boolean}
+ */
+function hasSubmittedScore(dateSeed) {
+  try {
+    return localStorage.getItem("submitted") === dateSeed;
+  } catch (e) {
+    console.error('Failed to check if score has been submitted:', e);
+    return false;
+  }
+}
+
+/**
  * 
  * @param {string} dateSeed retrieve last saved game state for this date
  * @param {Array<string>} currentWords - the word list for the current game
- * @returns { game: grid state, milliseconds: number, scoreSubmitted: boolean } | null
+ * @returns { game: grid state, milliseconds: number } | null
  */
 function retrieveLocalState(dateStr, currentWords) {
   try {
@@ -94,7 +119,7 @@ export default function GameSession({ words, shuffledChars, dateSeed, hskLevel, 
   const [showStreakPopup, setShowStreakPopup] = useState(false);
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
   const [streakData, setStreakData] = useState(null);
-  const [scoreSubmitted, setScoreSubmitted] = useState(false);
+  // const [scoreSubmitted, setScoreSubmitted] = useState(false);
 
   // Initialize stopwatch with saved time if resuming
   const stopWatch = useStopwatch({ 
@@ -109,17 +134,16 @@ export default function GameSession({ words, shuffledChars, dateSeed, hskLevel, 
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ milliseconds }),
+      body: JSON.stringify({ milliseconds, date: dateSeed }),
     })
       .then(res => res.json())
       .then(data => {
         if (data.success) {
           // Mark score as submitted in localStorage
-          const savedGame = retrieveLocalState(dateSeed, words);
-          if (savedGame && !preventStorage) {
-            saveLocalState(savedGame.game, savedGame.milliseconds, dateSeed, words, true);
-          }
-          
+          console.log('Score submitted successfully:', data);
+          rememberScoreSubmitted(dateSeed);
+
+
           if (milliseconds !== null) {
             // Show streak popup
             setStreakData(data.streak);
@@ -142,19 +166,24 @@ export default function GameSession({ words, shuffledChars, dateSeed, hskLevel, 
       stopWatch.reset(new Date(Date.now() + savedGame.milliseconds), false);
       setShowHowTo(false);
       setShowResumeModal(true);
-      
-      // If user is authenticated and game is completed but score not submitted, submit it
-      if (status === 'authenticated' && gameIsCompleted(savedGame.game) && !savedGame.scoreSubmitted) {
-        console.log('Found unsubmitted completed game, submitting score...');
-        submitScore(savedGame.milliseconds);
-      }
     } else {
       setShowHowTo(true);
       setShowResumeModal(false);
     }
-    // Reset score submitted flag when date changes
-    setScoreSubmitted(false);
-  }, [dateSeed, words, status]);
+  }, [dateSeed, words]);
+
+  useEffect(() => {
+    // If user is authenticated and game is completed but score not submitted, submit it
+    // (this can happen if user completed game while unauthenticated, logged in through OAuth, then returned to this page)
+    if (status === 'authenticated' && gameIsFinished(currentGameState) && !hasSubmittedScore(dateSeed)) {
+      console.log('Found unsubmitted completed game, submitting score...');
+      submitScore(gameIsCompleted(currentGameState) ? timerTotalMilliseconds(stopWatch) : null);
+    } else if (status === 'unauthenticated' && gameIsCompleted(currentGameState)) {
+      // User is not logged in and has completed the game
+      // Show login prompt
+      setTimeout(() => setShowLoginPrompt(true), 1000);
+    }
+  }, [dateSeed, status, currentGameState]);
 
   useEffect(() => {
     if (gameIsFinished(currentGameState)) stopWatch.pause();
@@ -163,23 +192,23 @@ export default function GameSession({ words, shuffledChars, dateSeed, hskLevel, 
   }, [currentGameState, dateSeed, words]);
 
   // Submit score when game is finished
-  useEffect(() => {
-    if (gameIsFinished(currentGameState) && gameBegun && !scoreSubmitted) {
-      setScoreSubmitted(true);
-      const completed = gameIsCompleted(currentGameState);
-      const milliseconds = completed ? timerTotalMilliseconds(stopWatch) : null;
+  // useEffect(() => {
+  //   if (gameIsFinished(currentGameState) && gameBegun && !hasSubmittedScore(dateSeed)) {
+  //     // setScoreSubmitted(true);
+  //     const completed = gameIsCompleted(currentGameState);
+  //     const milliseconds = completed ? timerTotalMilliseconds(stopWatch) : null;
       
-      if (status === 'authenticated') {
-        // User is logged in, submit score immediately
-        submitScore(milliseconds);
-      } else if (status === 'unauthenticated' && completed) {
-        // User is not logged in and completed the game
-        // Score is already saved to localStorage by another useEffect
-        // Show login prompt
-        setTimeout(() => setShowLoginPrompt(true), 1000);
-      }
-    }
-  }, [currentGameState, gameBegun, scoreSubmitted, status]);
+  //     if (status === 'authenticated') {
+  //       // User is logged in, submit score immediately
+  //       submitScore(milliseconds);
+  //     } else if (status === 'unauthenticated' && completed) {
+  //       // User is not logged in and completed the game
+  //       // Score is already saved to localStorage by another useEffect
+  //       // Show login prompt
+  //       setTimeout(() => setShowLoginPrompt(true), 1000);
+  //     }
+  //   }
+  // }, [currentGameState, gameBegun, status]);
 
   // set up callback to run beforeunload to save game state (save the user's time if they leave mid-game)
   useEffect(() => {

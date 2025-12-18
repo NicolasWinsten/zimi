@@ -3,14 +3,14 @@ import { NextResponse } from 'next/server';
 
 export async function POST(request) {
   try {
-    const { milliseconds } = await request.json();
-    
+    const { milliseconds, date } = await request.json();
+    console.log('Received score submission in POST:', milliseconds);
     // Submit the daily score
-    await submitDailyScore(milliseconds);
+    await submitDailyScore(milliseconds, date);
     
     // Update the streak (completed if milliseconds is not null)
     const completed = milliseconds !== null;
-    const streakData = await updateStreak(completed);
+    const streakData = await updateStreak(completed, date);
     
     return NextResponse.json({ 
       success: true, 

@@ -75,15 +75,17 @@ export function DailyTimer({ onExpire }) {
     <Box 
       sx={{ 
         display: 'flex', 
+        flexDirection: 'column',
         alignItems: 'center', 
-        gap: 2 
+        gap: 0.5 
       }} 
     >
       <Typography 
-        variant="h6" 
+        variant="caption" 
         sx={{ 
-          fontWeight: 'bold', 
-          mb: 0.0625 
+          fontWeight: 'bold',
+          fontSize: '0.75rem',
+          color: 'text.secondary'
         }}
       >
         Next Daily
