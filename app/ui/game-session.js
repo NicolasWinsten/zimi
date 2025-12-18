@@ -90,6 +90,7 @@ export default function GameSession({ words, shuffledChars, dateSeed, hskLevel, 
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
   const [streakData, setStreakData] = useState(null);
   const [scoreSubmitted, setScoreSubmitted] = useState(false);
+  const [pendingScore, setPendingScore] = useState(null); // Store score for unauthenticated users
 
   // Initialize stopwatch with saved time if resuming
   const stopWatch = useStopwatch({ 
@@ -100,6 +101,28 @@ export default function GameSession({ words, shuffledChars, dateSeed, hskLevel, 
   function getMilliseconds() {
     return stopWatch.totalSeconds * 1000 + stopWatch.milliseconds;
   }
+
+  // Function to submit score to backend
+  const submitScore = (milliseconds) => {
+    fetch('/api/submit-score', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ milliseconds }),
+    })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success && milliseconds !== null) {
+          // Show streak popup
+          setStreakData(data.streak);
+          setTimeout(() => setShowStreakPopup(true), 500);
+        }
+      })
+      .catch(error => {
+        console.error('Error submitting score:', error);
+      });
+  };
 
   // upon mounting, check for saved game state in localStorage
   useEffect(() => {
@@ -127,36 +150,31 @@ export default function GameSession({ words, shuffledChars, dateSeed, hskLevel, 
   useEffect(() => {
     if (gameIsFinished(currentGameState) && gameBegun && !scoreSubmitted) {
       setScoreSubmitted(true);
+      const completed = gameIsCompleted(currentGameState);
+      const milliseconds = completed ? getMilliseconds() : null;
       
       if (status === 'authenticated') {
-        // User is logged in, submit score
-        const completed = gameIsCompleted(currentGameState);
-        const milliseconds = completed ? getMilliseconds() : null;
-        
-        fetch('/api/submit-score', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ milliseconds }),
-        })
-          .then(res => res.json())
-          .then(data => {
-            if (data.success && completed) {
-              // Show streak popup
-              setStreakData(data.streak);
-              setTimeout(() => setShowStreakPopup(true), 500);
-            }
-          })
-          .catch(error => {
-            console.error('Error submitting score:', error);
-          });
-      } else if (status === 'unauthenticated' && gameIsCompleted(currentGameState)) {
-        // User is not logged in and completed the game, show login prompt
+        // User is logged in, submit score immediately
+        submitScore(milliseconds);
+      } else if (status === 'unauthenticated' && completed) {
+        // User is not logged in and completed the game
+        // Store the score to submit after login
+        setPendingScore(milliseconds);
+        // Show login prompt
         setTimeout(() => setShowLoginPrompt(true), 1000);
       }
     }
   }, [currentGameState, gameBegun, scoreSubmitted, status]);
+
+  // Submit pending score when user authenticates
+  useEffect(() => {
+    if (status === 'authenticated' && pendingScore !== null) {
+      console.log('User authenticated, submitting pending score:', pendingScore);
+      submitScore(pendingScore);
+      setPendingScore(null); // Clear pending score after submission
+      setShowLoginPrompt(false); // Close login prompt if still open
+    }
+  }, [status, pendingScore]);
 
   // set up callback to run beforeunload to save game state (save the user's time if they leave mid-game)
   useEffect(() => {
