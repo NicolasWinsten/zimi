@@ -39,10 +39,11 @@ const makeShareableResultString = (gameState, milliseconds, dateSeed) => {
  * @param {*} milliseconds 
  * @param {*} dateSeed 
  * @param {*} words - array of words for this game
+ * @param {*} scoreSubmitted - whether the score has been submitted
  */
-function saveLocalState(gameState, milliseconds, dateSeed, words) {
+function saveLocalState(gameState, milliseconds, dateSeed, words, scoreSubmitted = false) {
   console.log('Saving game state to localStorage...', gameState, milliseconds, dateSeed);
-  const objectToStore = { game: gameState, milliseconds, date: dateSeed, words };
+  const objectToStore = { game: gameState, milliseconds, date: dateSeed, words, scoreSubmitted };
   try {
     localStorage.setItem("zimi-save", JSON.stringify(objectToStore));
   } catch (e) {
@@ -54,7 +55,7 @@ function saveLocalState(gameState, milliseconds, dateSeed, words) {
  * 
  * @param {string} dateSeed retrieve last saved game state for this date
  * @param {Array<string>} currentWords - the word list for the current game
- * @returns { game: grid state, milliseconds: number } | null
+ * @returns { game: grid state, milliseconds: number, scoreSubmitted: boolean } | null
  */
 function retrieveLocalState(dateStr, currentWords) {
   try {
@@ -94,7 +95,6 @@ export default function GameSession({ words, shuffledChars, dateSeed, hskLevel, 
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
   const [streakData, setStreakData] = useState(null);
   const [scoreSubmitted, setScoreSubmitted] = useState(false);
-  const [pendingScore, setPendingScore] = useState(null); // Store score for unauthenticated users
 
   // Initialize stopwatch with saved time if resuming
   const stopWatch = useStopwatch({ 
@@ -113,10 +113,18 @@ export default function GameSession({ words, shuffledChars, dateSeed, hskLevel, 
     })
       .then(res => res.json())
       .then(data => {
-        if (data.success && milliseconds !== null) {
-          // Show streak popup
-          setStreakData(data.streak);
-          setTimeout(() => setShowStreakPopup(true), 500);
+        if (data.success) {
+          // Mark score as submitted in localStorage
+          const savedGame = retrieveLocalState(dateSeed, words);
+          if (savedGame && !preventStorage) {
+            saveLocalState(savedGame.game, savedGame.milliseconds, dateSeed, words, true);
+          }
+          
+          if (milliseconds !== null) {
+            // Show streak popup
+            setStreakData(data.streak);
+            setTimeout(() => setShowStreakPopup(true), 500);
+          }
         }
         return data;
       })
@@ -134,13 +142,19 @@ export default function GameSession({ words, shuffledChars, dateSeed, hskLevel, 
       stopWatch.reset(new Date(Date.now() + savedGame.milliseconds), false);
       setShowHowTo(false);
       setShowResumeModal(true);
+      
+      // If user is authenticated and game is completed but score not submitted, submit it
+      if (status === 'authenticated' && gameIsCompleted(savedGame.game) && !savedGame.scoreSubmitted) {
+        console.log('Found unsubmitted completed game, submitting score...');
+        submitScore(savedGame.milliseconds);
+      }
     } else {
       setShowHowTo(true);
       setShowResumeModal(false);
     }
     // Reset score submitted flag when date changes
     setScoreSubmitted(false);
-  }, [dateSeed, words]);
+  }, [dateSeed, words, status]);
 
   useEffect(() => {
     if (gameIsFinished(currentGameState)) stopWatch.pause();
@@ -160,28 +174,12 @@ export default function GameSession({ words, shuffledChars, dateSeed, hskLevel, 
         submitScore(milliseconds);
       } else if (status === 'unauthenticated' && completed) {
         // User is not logged in and completed the game
-        // Store the score to submit after login
-        setPendingScore(milliseconds);
+        // Score is already saved to localStorage by another useEffect
         // Show login prompt
         setTimeout(() => setShowLoginPrompt(true), 1000);
       }
     }
   }, [currentGameState, gameBegun, scoreSubmitted, status]);
-
-  // Submit pending score when user authenticates
-  useEffect(() => {
-    if (status === 'authenticated' && pendingScore !== null) {
-      submitScore(pendingScore)
-        .then(() => {
-          setPendingScore(null); // Clear pending score only after successful submission
-          setShowLoginPrompt(false); // Close login prompt if still open
-        })
-        .catch(error => {
-          console.error('Failed to submit pending score after authentication:', error);
-          // Keep pending score for potential retry
-        });
-    }
-  }, [status, pendingScore]);
 
   // set up callback to run beforeunload to save game state (save the user's time if they leave mid-game)
   useEffect(() => {
