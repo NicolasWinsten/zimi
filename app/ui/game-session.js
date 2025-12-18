@@ -113,6 +113,8 @@ export default function GameSession({ words, shuffledChars, dateSeed, hskLevel }
       setShowHowTo(true);
       setShowResumeModal(false);
     }
+    // Reset score submitted flag when date changes
+    setScoreSubmitted(false);
   }, [dateSeed, words]);
 
   useEffect(() => {

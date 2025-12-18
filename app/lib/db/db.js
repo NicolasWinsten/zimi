@@ -95,16 +95,20 @@ export async function updateStreak(completed) {
 
   if (completed) {
     if (currentStreak.length > 0) {
-      const lastDate = currentStreak[0].current_streak_last_date;
+      const lastDateObj = new Date(currentStreak[0].current_streak_last_date);
+      const lastDateStr = lastDateObj.toISOString().split('T')[0];
+      
       const yesterday = new Date();
       yesterday.setDate(yesterday.getDate() - 1);
       const yesterdayStr = yesterday.toISOString().split('T')[0];
       
+      const todayStr = new Date().toISOString().split('T')[0];
+      
       // Check if last completion was yesterday
-      if (lastDate === yesterdayStr) {
+      if (lastDateStr === yesterdayStr) {
         // Continue the streak
         newStreakLength = currentStreak[0].current_streak_length + 1;
-      } else if (lastDate === new Date().toISOString().split('T')[0]) {
+      } else if (lastDateStr === todayStr) {
         // Already completed today, don't update
         return {
           current_streak_length: currentStreak[0].current_streak_length,
