@@ -4,8 +4,14 @@ on:
     branches: [ main, master ]
   pull_request:
     branches: [ main, master ]
+  workflow_run:
+    workflows: ["Create/Delete Branch for Pull Request"]
+    types:
+      - completed
+
 env:
   NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET }}
+
 jobs:
   jest:
     name: Jest Unit Tests
@@ -24,6 +30,8 @@ jobs:
     name: Playwright E2E Tests
     timeout-minutes: 60
     runs-on: ubuntu-latest
+    # Run after Jest tests pass
+    needs: jest
     steps:
     - uses: actions/checkout@v4
     - uses: actions/setup-node@v4
@@ -35,6 +43,12 @@ jobs:
       run: npx playwright install --with-deps
     - name: Run Playwright tests
       run: npm run test:e2e
+      env:
+        # For PR tests, these would be set by Neon branching workflow
+        # For main/master branch, use the default POSTGRES_URL secret
+        TEST_DATABASE_URL: ${{ secrets.TEST_DATABASE_URL || secrets.POSTGRES_URL }}
+        POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
+        DATABASE_URL: ${{ secrets.DATABASE_URL || secrets.POSTGRES_URL }}
     - uses: actions/upload-artifact@v4
       if: ${{ !cancelled() }}
       with:
