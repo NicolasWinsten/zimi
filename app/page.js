@@ -7,8 +7,10 @@ import { currentDateStr, mkDateStr, sample, getDailyDifficulty } from "app/lib/u
 export default async function Page(props) {
   const searchParams = await props.searchParams;
   
-  const devMode = searchParams?.dev === 'true'
-  
+  const devMode = 'dev' in searchParams
+  const preventStorage = devMode && 'nostore' in searchParams
+  const preventRestore = devMode && 'norestore' in searchParams
+
   // Use date from search params if provided, otherwise use current date
   let dateSeed = currentDateStr()
   if (devMode && searchParams?.date) {
@@ -56,7 +58,15 @@ export default async function Page(props) {
 
   return (
       <div>
-        <GameSession key={dateSeed} words={todaysWords} shuffledChars={shuffledChars} dateSeed={dateSeed} hskLevel={hskLevel} />
+        <GameSession
+          key={dateSeed}
+          words={todaysWords}
+          shuffledChars={shuffledChars}
+          dateSeed={dateSeed}
+          hskLevel={hskLevel}
+          preventStorage={preventStorage}
+          preventRestore={preventRestore}
+          />
       </div>
   );
 }

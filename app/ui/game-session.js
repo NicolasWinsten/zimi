@@ -3,12 +3,15 @@
 import GameView from "./game-view";
 import { useRef, useEffect, useReducer, useState } from "react";
 import { useStopwatch } from "react-timer-hook";
-import { initialGridState, gridReducer, gameIsFinished } from "./hanzi-grid";
+import { initialGridState, gridReducer, gameIsFinished, gameIsCompleted } from "./hanzi-grid";
 import { Button, Typography } from '@mui/material';
 import HowToBox from 'app/ui/how-to-box';
 import MyDialog from 'app/ui/my-dialog';
 import { shareOnMobile } from "react-mobile-share";
 import WordList from "./word-list";
+import StreakPopup from "./streak-popup";
+import LoginPromptModal from "./login-prompt-modal";
+import { useSession } from "next-auth/react";
 
 
 
@@ -48,6 +51,32 @@ function saveLocalState(gameState, milliseconds, dateSeed, words) {
 }
 
 /**
+ * Flag in localStorage that score has been submitted for this date
+ * @param {string} dateSeed 
+ */
+function rememberScoreSubmitted(dateSeed) {
+  try {
+    localStorage.setItem("submitted", dateSeed);
+  } catch (e) {
+    console.error('Failed to remember score submission:', e);
+  }
+}
+
+/**
+ * Check if score has already been submitted for this date
+ * @param {string} dateSeed 
+ * @returns {boolean}
+ */
+function hasSubmittedScore(dateSeed) {
+  try {
+    return localStorage.getItem("submitted") === dateSeed;
+  } catch (e) {
+    console.error('Failed to check if score has been submitted:', e);
+    return false;
+  }
+}
+
+/**
  * 
  * @param {string} dateSeed retrieve last saved game state for this date
  * @param {Array<string>} currentWords - the word list for the current game
@@ -76,12 +105,21 @@ function retrieveLocalState(dateStr, currentWords) {
   }
 }
 
-export default function GameSession({ words, shuffledChars, dateSeed, hskLevel }) {
+function timerTotalMilliseconds(stopWatch) {
+  return stopWatch.totalSeconds * 1000 + stopWatch.milliseconds;
+}
+
+export default function GameSession({ words, shuffledChars, dateSeed, hskLevel, preventStorage, preventRestore }) {
   const [ currentGameState, dispatch ] = useReducer(gridReducer, initialGridState(shuffledChars));
+  const { data: session, status } = useSession();
   
   const [showHowTo, setShowHowTo] = useState(true);
   const [showResumeModal, setShowResumeModal] = useState(false);
   const [gameBegun, setGameBegun] = useState(false);
+  const [showStreakPopup, setShowStreakPopup] = useState(false);
+  const [showLoginPrompt, setShowLoginPrompt] = useState(false);
+  const [streakData, setStreakData] = useState(null);
+  // const [scoreSubmitted, setScoreSubmitted] = useState(false);
 
   // Initialize stopwatch with saved time if resuming
   const stopWatch = useStopwatch({ 
@@ -89,13 +127,40 @@ export default function GameSession({ words, shuffledChars, dateSeed, hskLevel }
     interval: 20,
   });
 
-  function getMilliseconds() {
-    return stopWatch.totalSeconds * 1000 + stopWatch.milliseconds;
-  }
+  // Function to submit score to backend
+  const submitScore = (milliseconds) => {
+    return fetch('/api/submit-score', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ milliseconds, date: dateSeed }),
+    })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          // Mark score as submitted in localStorage
+          console.log('Score submitted successfully:', data);
+          rememberScoreSubmitted(dateSeed);
+
+
+          if (milliseconds !== null) {
+            // Show streak popup
+            setStreakData(data.streak);
+            setTimeout(() => setShowStreakPopup(true), 500);
+          }
+        }
+        return data;
+      })
+      .catch(error => {
+        console.error('Error submitting score:', error.message || error);
+        throw error;
+      });
+  };
 
   // upon mounting, check for saved game state in localStorage
   useEffect(() => {
-    const savedGame = retrieveLocalState(dateSeed, words);
+    const savedGame = preventRestore ? null : retrieveLocalState(dateSeed, words);
     if (savedGame) {
       dispatch({ type: 'reset', state: savedGame.game });
       stopWatch.reset(new Date(Date.now() + savedGame.milliseconds), false);
@@ -108,17 +173,48 @@ export default function GameSession({ words, shuffledChars, dateSeed, hskLevel }
   }, [dateSeed, words]);
 
   useEffect(() => {
+    // If user is authenticated and game is completed but score not submitted, submit it
+    // (this can happen if user completed game while unauthenticated, logged in through OAuth, then returned to this page)
+    if (status === 'authenticated' && gameIsFinished(currentGameState) && !hasSubmittedScore(dateSeed)) {
+      console.log('Found unsubmitted completed game, submitting score...');
+      submitScore(gameIsCompleted(currentGameState) ? timerTotalMilliseconds(stopWatch) : null);
+    } else if (status === 'unauthenticated' && gameIsCompleted(currentGameState)) {
+      // User is not logged in and has completed the game
+      // Show login prompt
+      setTimeout(() => setShowLoginPrompt(true), 1000);
+    }
+  }, [dateSeed, status, currentGameState]);
+
+  useEffect(() => {
     if (gameIsFinished(currentGameState)) stopWatch.pause();
     // only save if the game was actually played
-    if (gameBegun) saveLocalState(currentGameState, getMilliseconds(), dateSeed, words);
+    if (gameBegun && !preventStorage) saveLocalState(currentGameState, timerTotalMilliseconds(stopWatch), dateSeed, words);
   }, [currentGameState, dateSeed, words]);
 
+  // Submit score when game is finished
+  // useEffect(() => {
+  //   if (gameIsFinished(currentGameState) && gameBegun && !hasSubmittedScore(dateSeed)) {
+  //     // setScoreSubmitted(true);
+  //     const completed = gameIsCompleted(currentGameState);
+  //     const milliseconds = completed ? timerTotalMilliseconds(stopWatch) : null;
+      
+  //     if (status === 'authenticated') {
+  //       // User is logged in, submit score immediately
+  //       submitScore(milliseconds);
+  //     } else if (status === 'unauthenticated' && completed) {
+  //       // User is not logged in and completed the game
+  //       // Score is already saved to localStorage by another useEffect
+  //       // Show login prompt
+  //       setTimeout(() => setShowLoginPrompt(true), 1000);
+  //     }
+  //   }
+  // }, [currentGameState, gameBegun, status]);
 
   // set up callback to run beforeunload to save game state (save the user's time if they leave mid-game)
   useEffect(() => {
     const handleBeforeUnload = (e) => {
-      if (gameBegun && !gameIsFinished(currentGameState)) {
-        saveLocalState(currentGameState, getMilliseconds(), dateSeed, words);
+      if (gameBegun && !gameIsFinished(currentGameState) && !preventStorage) {
+        saveLocalState(currentGameState, timerTotalMilliseconds(stopWatch), dateSeed, words);
       }
     };
 
@@ -156,6 +252,20 @@ export default function GameSession({ words, shuffledChars, dateSeed, hskLevel }
         buttonContent={ gameIsFinished(currentGameState) ? "Look at scores" : "Resume" }
       />
 
+      {streakData && (
+        <StreakPopup
+          open={showStreakPopup}
+          onClose={() => setShowStreakPopup(false)}
+          streakLength={streakData.current_streak_length}
+          isNewStreak={streakData.current_streak_length === 1}
+        />
+      )}
+
+      <LoginPromptModal
+        open={showLoginPrompt}
+        onClose={() => setShowLoginPrompt(false)}
+      />
+
       <div className={`flex flex-col gap-4 items-center justify-center ${showHowTo || showResumeModal ? 'blur-sm pointer-events-none select-none' : ''}`}>
         <GameView
           gameState={currentGameState}
@@ -171,7 +281,7 @@ export default function GameSession({ words, shuffledChars, dateSeed, hskLevel }
             onClick={() => {
               shareOnMobile({
                 title: 'My Daily Zimi',
-                text: makeShareableResultString(currentGameState, getMilliseconds(), dateSeed),
+                text: makeShareableResultString(currentGameState, timerTotalMilliseconds(stopWatch), dateSeed),
                 url: "https://zimi-ten.vercel.app/"
               }, console.error)
             }}
