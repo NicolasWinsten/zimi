@@ -90,29 +90,17 @@ export async function closeAllDialogs(page: Page): Promise<void> {
  */
 export async function loginTestUser(page: Page, email: string, name: string): Promise<void> {
   const returnTo = page.url();
-  
-  // console.log(`[TEST] Starting login for email: ${email}`);
-  // console.log(`[TEST] Current page URL before login: ${returnTo}`);
-  
   // Step 2: Click the user menu button
-  // console.log('[TEST] Clicking user menu button...');
   await page.getByTestId('user-menu-button').click();
-  // await page.waitForTimeout(500);
 
   // Step 3: Click the "Sign in" menu item
-  // console.log('[TEST] Clicking sign-in menu item...');
   await page.getByTestId('sign-in-menu-item').click();
-  // await page.waitForTimeout(500);
 
   // Step 4: Fill in the test credentials form
-  // console.log('[TEST] Filling in credentials form...');
   await page.getByRole('textbox', { name: /email/i }).fill(email);
-  // await page.waitForTimeout(300);
   await page.getByRole('textbox', { name: /name/i }).fill(name);
-  // await page.waitForTimeout(300);
   
   // Click the sign in button for the test credentials provider
-  // console.log('[TEST] Clicking sign-in button...');
   await page.getByRole('button', { name: /sign in with test login/i }).click();
   
   await page.waitForURL(returnTo, {timeout: 1000})
