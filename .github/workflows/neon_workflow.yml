@@ -84,16 +84,16 @@ jobs:
         run: npx playwright install --with-deps
       - name: Debug - Check DATABASE_URL
         env:
-            DATABASE_URL: ${{ needs.create_neon_branch.outputs.db_url_with_pooler }}
+            DATABASE_URL: ${{ needs.create_neon_branch.outputs.db_url }}
         run: |
           echo "DATABASE_URL is set: ${DATABASE_URL:+yes}"
           echo "DATABASE_URL length: ${#DATABASE_URL}"
       - name: Run Playwright E2E tests
         env:
             # Use the branched database URL from Neon workflow
-            # TEST_DATABASE_URL: ${{ needs.create_neon_branch.outputs.db_url_with_pooler }}
-            POSTGRES_URL: ${{ needs.create_neon_branch.outputs.db_url_with_pooler }}
-            DATABASE_URL: ${{ needs.create_neon_branch.outputs.db_url_with_pooler }}
+            # TEST_DATABASE_URL: ${{ needs.create_neon_branch.outputs.db_url }}
+            POSTGRES_URL: ${{ needs.create_neon_branch.outputs.db_url }}
+            DATABASE_URL: ${{ needs.create_neon_branch.outputs.db_url }}
             NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET }}
         run: npm run test:e2e
       - uses: actions/upload-artifact@v4
