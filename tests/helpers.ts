@@ -103,7 +103,7 @@ export async function loginTestUser(page: Page, email: string, name: string): Pr
   // Click the sign in button for the test credentials provider
   await page.getByRole('button', { name: /sign in with test login/i }).click();
   
-  await page.waitForURL(returnTo, {timeout: 1000})
+  await page.waitForURL(returnTo, {timeout: 10000})
 }
 
 export async function retrieveLocalSave(page: Page): Promise<SavedGameState | null> {

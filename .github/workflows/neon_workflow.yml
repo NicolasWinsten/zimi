@@ -44,6 +44,8 @@ jobs:
       || github.event.action == 'opened'
       || github.event.action == 'reopened')
     runs-on: ubuntu-latest
+    env:
+      NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET }}
     steps:
       - name: Get branch expiration date as an env variable (2 weeks from now)
         id: get_expiration_date
@@ -56,6 +58,8 @@ jobs:
           branch_name: preview/pr-${{ github.event.number }}-${{ needs.setup.outputs.branch }}
           api_key: ${{ secrets.NEON_API_KEY }}
           expires_at: ${{ env.EXPIRES_AT }}
+      - name: Set DATABASE_URL from Neon branch
+        run: echo "DATABASE_URL=${{ steps.create_neon_branch.outputs.db_url }}" >> $GITHUB_ENV
       - name: Debug - Print Neon outputs
         run: |
           echo "db_url: ${{ steps.create_neon_branch.outputs.db_url }}"
@@ -76,9 +80,7 @@ jobs:
           echo "DATABASE_URL length: ${#DATABASE_URL}"
       - name: Run Playwright E2E tests
         env:
-            DATABASE_URL: ${{ steps.create_neon_branch.outputs.db_url }}
             POSTGRES_URL: ${{ steps.create_neon_branch.outputs.db_url }}
-            NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET }}
         run: npm run test:e2e
       - uses: actions/upload-artifact@v4
         if: ${{ !cancelled() }}
