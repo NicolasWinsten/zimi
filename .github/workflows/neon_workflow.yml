@@ -73,6 +73,12 @@ jobs:
         run: npm ci
       - name: Install Playwright Browsers
         run: npx playwright install --with-deps
+      - name: Debug - Check DATABASE_URL
+        env:
+            DATABASE_URL: ${{ needs.create_neon_branch.outputs.db_url_with_pooler }}
+        run: |
+          echo "DATABASE_URL is set: ${DATABASE_URL:+yes}"
+          echo "DATABASE_URL length: ${#DATABASE_URL}"
       - name: Run Playwright E2E tests
         env:
             # Use the branched database URL from Neon workflow
