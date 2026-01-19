@@ -17,8 +17,7 @@ function DatePicker_() {
   const searchParams = useSearchParams();
   
   // Only show date picker if dev mode is enabled
-  const devMode = searchParams?.get('dev') === 'true';
-  
+  const devMode = searchParams?.has('dev')
   if (!devMode) {
     return null;
   }

@@ -14,7 +14,7 @@ function SignInOutMenuItem({status}) {
   if (status === "authenticated") {
     return (<MenuItem onClick={signOut}>Sign Out</MenuItem>)
   } else if (status === "unauthenticated") {
-    return (<MenuItem onClick={signIn}>Sign in</MenuItem>);
+    return (<MenuItem onClick={signIn} data-testid="sign-in-menu-item">Sign in</MenuItem>);
   } else {
     return <></>
   }
@@ -43,6 +43,7 @@ export default function UserMenu() {
         aria-controls={open ? 'user-menu' : undefined}
         aria-haspopup="true"
         aria-expanded={open ? 'true' : undefined}
+        data-testid="user-menu-button"
       >
         <Avatar alt="User" src="/user-icon.svg" sx={{ width: 32, height: 32 }} />
       </IconButton>

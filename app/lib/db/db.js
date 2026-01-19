@@ -1,11 +1,10 @@
 "use server";
 import { authOptions } from 'app/api/auth/[...nextauth]/route';
-import bcrypt from 'bcrypt';
 import { getServerSession } from 'next-auth';
 import postgres from 'postgres';
-import { currentDateStr, mkDateStr } from '../utils';
+import { mkDateStr } from '../utils';
 
-const sql = postgres(process.env.POSTGRES_URL, { ssl: 'require' });
+const sql = postgres(process.env.DATABASE_URL, { ssl: 'require' });
 
 export async function getTopScores(limit = 10) {
   const scores = await sql`
@@ -23,7 +22,7 @@ export async function getTopScores(limit = 10) {
  * it indicates the user got three strikes and failed to complete the game.
  * @param {number | null} milliseconds - time taken to complete the game in milliseconds, null if user failed
  * @param {string} date - date string in YYYY-MM-DD format
- * @returns 
+ * @returns {object | null} the inserted row if submission was successful, null if user had already submitted for today
  */
 export async function submitDailyScore(milliseconds, date) {
   const session = await getServerSession(authOptions);
@@ -32,8 +31,6 @@ export async function submitDailyScore(milliseconds, date) {
     throw new Error('Unauthenticated user tried to submit score');
   }
 
-  console.log(`Submitting daily score for ${session.user.email}: ${milliseconds} ms on ${date}`);
-
   const result = await sql`
     INSERT INTO daily_scores (user_id, date, milliseconds)
     VALUES ((select id from users where email = ${session.user.email}), ${date}, ${milliseconds})
@@ -41,17 +38,23 @@ export async function submitDailyScore(milliseconds, date) {
     RETURNING *;
   `;
 
-  console.log(`Daily score submission result for ${session.user.email}:`, result);
-
-  if (milliseconds !== null)
-    console.log(`${session.user.email} submitted a score of ${milliseconds} ms on ${date}`);
-  else console.log(`${session.user.email} failed to complete today's game on ${date}`);
-  return result.length === 1
+  console.log(`User ${session.user.email} submission result`, result);
+  return result.length > 0 ? result[0] : null;
 }
 
+
+function streakRowToObj(row) {
+  return {
+    streak: row.current_streak_length,
+    longestStreak: row.longest_streak_length,
+    lastDate: row.current_streak_last_date ? mkDateStr(row.current_streak_last_date) : null
+  };
+}
+
+const emptyStreakObj = { streak: 0, longestStreak: 0, lastDate: null }
 /**
  * Get the user's current streak information
- * @returns {Promise<{currentStreak: number, longestStreak: number} | null>}
+ * @returns {Promise<{streak: number, longestStreak: number, lastDate: string} | null>}
  */
 export async function getStreakInfo() {
   const session = await getServerSession(authOptions);
@@ -61,18 +64,18 @@ export async function getStreakInfo() {
   }
 
   const result = await sql`
-    SELECT current_streak_length, longest_streak_length, current_streak_last_date
+    SELECT current_streak_length, longest_streak_length, date(current_streak_last_date) as current_streak_last_date
     FROM streaks
     WHERE user_id = (select id from users where email = ${session.user.email})
   `;
 
-  if (result.length !== 1) {
+  if (result.length > 1) {
     throw new Error('Error fetching streak for user ' + session.user.email);
+  } else if (result.length === 0) {
+    console.log("No streak data for user " + session.user.email);
+    return emptyStreakObj;
   } else {
-    return {
-      streak: result[0].current_streak_last_date === currentDateStr() ? 0 : result[0].current_streak_length,
-      longestStreak: result[0].longest_streak_length
-    }
+    return streakRowToObj(result[0]);
   }
 
 }
@@ -81,7 +84,7 @@ export async function getStreakInfo() {
  * Update the user's streak after completing today's puzzle
  * @param {boolean} completed - whether the user completed the puzzle (true) or failed (false)
  * @param {string} date - date string in YYYY-MM-DD format
- * @returns {Promise<{current_streak_length: number, longest_streak_length: number}>}
+ * @returns {Promise<{streak: number, longestStreak: number, lastDate: string} | null>} - true if streak was updated successfully
  */
 export async function updateStreak(completed, date) {
   const session = await getServerSession(authOptions);
@@ -122,12 +125,12 @@ export async function updateStreak(completed, date) {
           ELSE 0
         END
       ),
-      current_streak_last_date = CASE WHEN ${completed} THEN ${date}::date ELSE streaks.current_streak_last_date END
-    RETURNING current_streak_length, longest_streak_length;
+      current_streak_last_date = CASE WHEN ${completed} THEN ${date}::date ELSE NULL END
+    RETURNING *;
   `;
 
   console.log(`Updated streak for ${session.user.email}:`, result[0]);
 
-  return result[0];
+  return streakRowToObj(result[0]);
 }
 

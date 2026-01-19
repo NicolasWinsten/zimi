@@ -111,7 +111,7 @@ function timerTotalMilliseconds(stopWatch) {
 
 export default function GameSession({ words, shuffledChars, dateSeed, hskLevel, preventStorage, preventRestore }) {
   const [ currentGameState, dispatch ] = useReducer(gridReducer, initialGridState(shuffledChars));
-  const { data: session, status } = useSession();
+  const { status } = useSession();
   
   const [showHowTo, setShowHowTo] = useState(true);
   const [showResumeModal, setShowResumeModal] = useState(false);
@@ -119,7 +119,6 @@ export default function GameSession({ words, shuffledChars, dateSeed, hskLevel, 
   const [showStreakPopup, setShowStreakPopup] = useState(false);
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
   const [streakData, setStreakData] = useState(null);
-  // const [scoreSubmitted, setScoreSubmitted] = useState(false);
 
   // Initialize stopwatch with saved time if resuming
   const stopWatch = useStopwatch({ 
@@ -138,15 +137,15 @@ export default function GameSession({ words, shuffledChars, dateSeed, hskLevel, 
     })
       .then(res => res.json())
       .then(data => {
-        if (data.success) {
-          // Mark score as submitted in localStorage
-          console.log('Score submitted successfully:', data);
+        console.log('Score submission response:', data);
+        if (data.success || data.dailyAlreadyHasSubmission)
           rememberScoreSubmitted(dateSeed);
-
-
+        if (data.dailyAlreadyHasSubmission) {
+          console.log('Score for today has already been submitted.');
+        } else if (data.success) {
           if (milliseconds !== null) {
             // Show streak popup
-            setStreakData(data.streak);
+            setStreakData(data.newStreak);
             setTimeout(() => setShowStreakPopup(true), 500);
           }
         }
@@ -175,8 +174,8 @@ export default function GameSession({ words, shuffledChars, dateSeed, hskLevel, 
   useEffect(() => {
     // If user is authenticated and game is completed but score not submitted, submit it
     // (this can happen if user completed game while unauthenticated, logged in through OAuth, then returned to this page)
-    if (status === 'authenticated' && gameIsFinished(currentGameState) && !hasSubmittedScore(dateSeed)) {
-      console.log('Found unsubmitted completed game, submitting score...');
+    if ( status === 'authenticated' && gameIsFinished(currentGameState) && !hasSubmittedScore(dateSeed)) {
+      console.log('Client submitting score...');
       submitScore(gameIsCompleted(currentGameState) ? timerTotalMilliseconds(stopWatch) : null);
     } else if (status === 'unauthenticated' && gameIsCompleted(currentGameState)) {
       // User is not logged in and has completed the game
@@ -249,15 +248,15 @@ export default function GameSession({ words, shuffledChars, dateSeed, hskLevel, 
               "You have a completed game from today. Come back tomorrow for a new zimi!" :
               "You have an in-progress game from today. Resume where you left off?"
             }
-        buttonContent={ gameIsFinished(currentGameState) ? "Look at scores" : "Resume" }
+        buttonContent={<span data-testid="resume-game-button">{ gameIsFinished(currentGameState) ? "Look at scores" : "Resume" }</span>}
       />
 
       {streakData && (
         <StreakPopup
           open={showStreakPopup}
           onClose={() => setShowStreakPopup(false)}
-          streakLength={streakData.current_streak_length}
-          isNewStreak={streakData.current_streak_length === 1}
+          streakLength={streakData.streak}
+          isNewStreak={streakData.streak === 1}
         />
       )}
 

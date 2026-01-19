@@ -29,14 +29,11 @@ export default function LoginPromptModal({ open, onClose }) {
       }}
     >
       <DialogTitle className="text-center text-2xl font-bold text-gray-800">
-        Track Your Progress! 📊
+        Login to track your streak!
       </DialogTitle>
       
       <DialogContent>
         <Box sx={{ textAlign: 'center', py: 2 }}>
-          <Typography variant="h6" sx={{ mb: 2 }}>
-            🔥 Start your streak
-          </Typography>
           <Typography variant="body1" sx={{ mb: 2 }}>
             Sign in to track your daily scores, build streaks, and compete with others!
           </Typography>
@@ -47,11 +44,7 @@ export default function LoginPromptModal({ open, onClose }) {
             border: '2px solid #9333ea'
           }}>
             <Typography variant="body2" color="text.secondary">
-              ✨ Keep your streak alive by solving puzzles daily
-              <br />
-              🏆 Compete on the leaderboard
-              <br />
-              📈 Track your progress over time
+              Keep your streak alive by solving the puzzle each day
             </Typography>
           </Box>
         </Box>

@@ -11,6 +11,7 @@ import AppBar from '@mui/material/AppBar';
 import Toolbar from '@mui/material/Toolbar';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
+import { streakIsCurrent } from 'app/lib/utils';
 
 const appBarStyle = {
   backgroundColor: mahjongTileFace,
@@ -20,24 +21,41 @@ const appBarStyle = {
 
 async function StreakBanner() {
   const streakInfo = await getStreakInfo();
-  
-  if (!streakInfo || streakInfo.streak === 0) {
-    return null;
-  }
-  
-  const fireCount = Math.min(streakInfo.streak, 10);
-  const fires = Array(fireCount).fill('🔥');
-  
-  return (
-    <div className="flex items-center gap-2">
-      <div className="flex -space-x-2">
-        {fires.map((_, index) => (
-          <span key={index} className="text-2xl">🔥</span>
-        ))}
+  // TODO also retrieve their daily score and color fires grey if they failed today
+  console.log(streakInfo);
+
+  if (streakInfo?.lastDate && streakIsCurrent(streakInfo.lastDate)) {
+    const fireCount = Math.min(streakInfo.streak, 3);
+    const fires = new Array(fireCount).fill('🔥');
+    
+    return (
+      <div className="flex items-center gap-1">
+        <div 
+          className="flex items-center"
+          style={{
+            // Each fire takes ~0.5em, compressing heavily
+            // Container shrinks to fit available space
+            maxWidth: 'min(100%, 8rem)',
+            overflow: 'hidden',
+          }}
+        >
+          {fires.map((_, index) => (
+            <span 
+              key={index}
+              data-testid="streak-fire"
+              className="text-2xl shrink-0"
+              style={{
+                marginLeft: index === 0 ? 0 : '-1em',
+              }}
+            >
+              🔥
+            </span>
+          ))}
+        </div>
+        <span data-testid="streak-count" className="text-lg font-bold text-orange-600 shrink-0">{streakInfo.streak}</span>
       </div>
-      <span className="text-lg font-bold text-orange-600">{streakInfo.streak}</span>
-    </div>
-  );
+    );
+  }
 }
 
 export default function RootLayout({ children }) {

@@ -47,7 +47,7 @@ export default function HowToBox({ open, onClose, hskLevel }) {
           </Stack>
         </Stack>
       }
-      buttonContent="Start"
+      buttonContent={<span data-testid="how-to-start-button">Start</span>}
     />
   );
 }

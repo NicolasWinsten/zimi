@@ -1,18 +1,20 @@
 /**
  * Global setup for Playwright tests
- * Runs once before all tests to prepare the test database
+ * Runs once before all tests start
+ * Clears test data to ensure a clean slate
  */
 
-import { setupTestDatabase } from './db-test-setup';
+import { clearTestData } from './db-test-setup';
 
-export default async function globalSetup() {
-  console.log('\n🚀 Running global test setup...\n');
-  
+async function globalSetup() {
+  console.log('🧹 Global setup: clearing test database...');
   try {
-    await setupTestDatabase();
-    console.log('\n✅ Global setup complete\n');
+    await clearTestData();
+    console.log('✓ Database cleared successfully');
   } catch (error) {
-    console.error('\n❌ Global setup failed:', error);
+    console.error('✗ Error clearing database:', error);
     throw error;
   }
 }
+
+export default globalSetup;

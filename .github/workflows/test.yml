@@ -46,7 +46,7 @@ jobs:
       env:
         # For PR tests, these would be set by Neon branching workflow
         # For main/master branch, use the default POSTGRES_URL secret
-        TEST_DATABASE_URL: ${{ secrets.TEST_DATABASE_URL || secrets.POSTGRES_URL }}
+        TEST_DATABASE_URL: ${{ secrets.TEST_DATABASE_URL }}
         POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
         DATABASE_URL: ${{ secrets.DATABASE_URL || secrets.POSTGRES_URL }}
     - uses: actions/upload-artifact@v4

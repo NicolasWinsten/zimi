@@ -28,7 +28,6 @@ export default async function Page(props) {
   
   // Use word list from search params if provided, otherwise get random words
   let todaysWords
-  let customWordList = false
   if (devMode && searchParams?.words) {
     // Parse comma-separated word list
     const customWords = searchParams.words
@@ -39,7 +38,6 @@ export default async function Page(props) {
     const validWords = customWords.every(word => isValidWord(word) && word.length === 2)
     if (validWords) {
       todaysWords = customWords
-      customWordList = true
       console.log(`Using custom word list: ${todaysWords.join(', ')}`)
     } else {
       // Show error page for invalid word list
