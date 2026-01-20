@@ -4,19 +4,11 @@ import { collectTiles, clickTileByIndex, getSelectedTile, getTileByCharacter, cl
 test.describe('Two tile custom game', () => {
   test.beforeEach(async ({ page }) => {
     // Navigate to the custom game page with 2 tiles
-    await page.goto('http://localhost:3000/?dev=true&words=结婚');
+    await page.goto('/?dev=true&words=结婚');
     
     // Close the "How To" dialog if it appears
-    // const startButton = page.getByTestId('how-to-start-button');
-
-    // await expect(startButton).toBeVisible();
-
-    // await startButton.click()
-
     await closeHowToDialog(page);
     
-    // await page.getByTestId('how-to-dialog').waitFor({ state: 'detached' });
-
     const howToDialog = page.getByTestId('how-to-dialog');
     await expect(howToDialog).toHaveCount(0);
 
@@ -39,22 +31,15 @@ test.describe('Two tile custom game', () => {
 
     await expect(hun).toHaveAttribute('data-match-color', color!);
   });
+
 });
 
 test.describe('HanziGrid Component', () => {
   test.beforeEach(async ({ page }) => {
     // Navigate to the game page
-    await page.goto('http://localhost:3000');
+    await page.goto('');
     
     // Close the "How To" dialog if it appears
-    // const startButton = page.getByTestId('how-to-start-button');
-
-    // await expect(startButton).toBeVisible();
-
-    // await startButton.click()
-    
-    // await page.getByTestId('how-to-dialog').waitFor({ state: 'detached' });
-
     await closeHowToDialog(page);
 
     const howToDialog = page.getByTestId('how-to-dialog');
@@ -73,7 +58,7 @@ test.describe('HanziGrid Component', () => {
   });
 
   test('should render 16 tiles in a 4x4 grid', async ({ page }) => {
-    const tiles = await collectTiles(page);
+    const tiles = collectTiles(page);
     await expect(tiles).toHaveCount(16);
   });
 
@@ -137,7 +122,7 @@ test.describe('HanziGrid Component', () => {
 
   test('should show timer display', async ({ page }) => {
     // Look for timer
-    const timer = await page.getByTestId('timer-display');
+    const timer = page.getByTestId('timer-display');
     await expect(timer).toBeVisible();
   });
 
