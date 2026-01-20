@@ -1,23 +1,28 @@
 import { test, expect } from '@playwright/test';
-import { clickTileByIndex, closeHowToDialog, retrieveLocalSave } from './helpers';
+import { clickTileByIndex, closeHowToDialog, getTileByCharacter, retrieveLocalSave } from './helpers';
 
 test.describe('LocalStorage Game State', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('http://localhost:3000');
+    await page.goto('');
 
     // Ensure localStorage is cleared before each test (sanity check)
     expect(await retrieveLocalSave(page)).toBeNull();
   });
 
-  test('should save game state to localStorage when playing', async ({ page }) => {
-    await page.goto('http://localhost:3000');
+  test('should save unfinished game state correctly', async ({ page }) => {
+    await page.goto('/?words=钱包,别人,男生,马上,请假,有时,前天,后边&dev=true');
     await closeHowToDialog(page);
     
     // Click a few tiles to create some game state
-    await clickTileByIndex(page, 0);
-    await clickTileByIndex(page, 4);
+    // match 钱包
+    await getTileByCharacter(page, '钱').click();
+    await getTileByCharacter(page, '包').click();
+
+    // mismatch 马前
+    await getTileByCharacter(page, '马').click();
+    await getTileByCharacter(page, '前').click();
     
-    await page.waitForTimeout(1000); // Let it save
+    await page.reload();
 
     // Check that localStorage has saved game data
     const savedData = await retrieveLocalSave(page);
@@ -32,20 +37,33 @@ test.describe('LocalStorage Game State', () => {
     expect(savedDate.getUTCMonth()).toEqual(today.getUTCMonth());
     expect(savedDate.getUTCDate()).toEqual(today.getUTCDate());
 
-    const { tileStates, strikes, completed } = savedData!.game;
+    const { tileStates, strikes } = savedData!.game;
 
-    expect(completed).toBeFalsy();
-    expect([0,1].includes(strikes)).toBeTruthy();
-    
-    const numMatches = tileStates.filter(t => t.match !== null).length;
+    // expect one strike and one matched pair
+    expect(strikes).toEqual(1);
+    expect(tileStates.every(t => !"钱包".includes(t.char) || t.match !== null)).toBe(true);
 
-    // should have at least one strike or one matched pair
-    expect(strikes == 1 ? numMatches == 0 : numMatches == 1).toBeTruthy();
+    // get rid of resume game dialog
+    const resumeButton = page.getByTestId('resume-game-button');
+    await resumeButton.click();
+    // unmatch 钱包
+    await getTileByCharacter(page, '钱').click();
+
+    await page.reload();
+
+    const savedDataAfterUnmatch = await retrieveLocalSave(page);
+    expect(savedDataAfterUnmatch).not.toBeNull();
+
+    const { tileStates: tileStatesAfterUnmatch, strikes: strikesAfterUnmatch } = savedDataAfterUnmatch!.game;
+
+    // expect still one strike and zero matched pairs
+    expect(strikesAfterUnmatch).toEqual(1);
+    expect(tileStatesAfterUnmatch.every(t => t.match === null)).toBe(true);
   });
 
   test('should show resume dialog when saved game exists', async ({ page }) => {
     // First visit: create a saved game
-    await page.goto('http://localhost:3000');
+    await page.goto('');
     await closeHowToDialog(page);
     
     // Make some progress
@@ -65,7 +83,7 @@ test.describe('LocalStorage Game State', () => {
 
   test('should restore game state when resuming', async ({ page }) => {
     // First visit: create a saved game with specific state
-    await page.goto('http://localhost:3000/');
+    await page.goto('');
     await closeHowToDialog(page);
     
     // try matching two tiles
@@ -81,14 +99,9 @@ test.describe('LocalStorage Game State', () => {
     // Reload the page
     await page.reload();
     
-    // Resume the game
-    const resumeDialog = page.getByTestId('resume-game-dialog');
-    await expect(resumeDialog).toBeVisible();
-    
+    // // Resume the game
     const resumeButton = page.getByTestId('resume-game-button');
     await resumeButton.click();
-    
-    await resumeDialog.waitFor({ state: 'hidden' });
     
     // Verify tiles still have the same content (same seed)
     await expect(page.getByTestId('hanzi-tile-0')).toHaveText(tile0Text!);
@@ -98,20 +111,21 @@ test.describe('LocalStorage Game State', () => {
 
   test('should not show resume dialog for different date', async ({ page }) => {
     // Visit with one date and create saved game
-    await page.goto('http://localhost:3000?dev=true&date=2025-01-01');
+    await page.goto('/?dev=true&date=2025-01-01');
     await closeHowToDialog(page);
     
     await clickTileByIndex(page, 0);
+    await clickTileByIndex(page, 4);
     await page.waitForTimeout(500);
     
     // Visit with different date
-    await page.goto('http://localhost:3000?dev=true&date=2025-01-02');
+    await page.goto('/?dev=true&date=2025-01-02');
     
     // Should show how-to dialog, not resume dialog
-    const howToDialog = page.getByTestId('how-to-dialog');
+    const howToDialog = page.getByTestId('how-to-start-button');
     await expect(howToDialog).toBeVisible();
     
-    const resumeDialog = page.getByTestId('resume-game-dialog');
+    const resumeDialog = page.getByTestId('resume-game-button');
     await expect(resumeDialog).not.toBeVisible();
   });
 

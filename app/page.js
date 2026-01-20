@@ -7,8 +7,10 @@ import { currentDateStr, mkDateStr, sample, getDailyDifficulty } from "app/lib/u
 export default async function Page(props) {
   const searchParams = await props.searchParams;
   
-  const devMode = searchParams?.dev === 'true'
-  
+  const devMode = 'dev' in searchParams
+  const preventStorage = devMode && 'nostore' in searchParams
+  const preventRestore = devMode && 'norestore' in searchParams
+
   // Use date from search params if provided, otherwise use current date
   let dateSeed = currentDateStr()
   if (devMode && searchParams?.date) {
@@ -26,7 +28,6 @@ export default async function Page(props) {
   
   // Use word list from search params if provided, otherwise get random words
   let todaysWords
-  let customWordList = false
   if (devMode && searchParams?.words) {
     // Parse comma-separated word list
     const customWords = searchParams.words
@@ -37,7 +38,6 @@ export default async function Page(props) {
     const validWords = customWords.every(word => isValidWord(word) && word.length === 2)
     if (validWords) {
       todaysWords = customWords
-      customWordList = true
       console.log(`Using custom word list: ${todaysWords.join(', ')}`)
     } else {
       // Show error page for invalid word list
@@ -56,7 +56,15 @@ export default async function Page(props) {
 
   return (
       <div>
-        <GameSession key={dateSeed} words={todaysWords} shuffledChars={shuffledChars} dateSeed={dateSeed} hskLevel={hskLevel} />
+        <GameSession
+          key={dateSeed}
+          words={todaysWords}
+          shuffledChars={shuffledChars}
+          dateSeed={dateSeed}
+          hskLevel={hskLevel}
+          preventStorage={preventStorage}
+          preventRestore={preventRestore}
+          />
       </div>
   );
 }

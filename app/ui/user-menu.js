@@ -8,12 +8,13 @@ import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import Divider from '@mui/material/Divider';
 import ListItemText from '@mui/material/ListItemText';
+import { Typography } from '@mui/material';
 
 function SignInOutMenuItem({status}) {
   if (status === "authenticated") {
     return (<MenuItem onClick={signOut}>Sign Out</MenuItem>)
   } else if (status === "unauthenticated") {
-    return (<MenuItem onClick={signIn}>Sign in</MenuItem>);
+    return (<MenuItem onClick={signIn} data-testid="sign-in-menu-item">Sign in</MenuItem>);
   } else {
     return <></>
   }
@@ -36,13 +37,13 @@ export default function UserMenu() {
 
   return (
     <div className='flex'>
-      {session && (<p>{session.user.name}</p>)}
       <IconButton
         onClick={handleOpen}
         size="small"
         aria-controls={open ? 'user-menu' : undefined}
         aria-haspopup="true"
         aria-expanded={open ? 'true' : undefined}
+        data-testid="user-menu-button"
       >
         <Avatar alt="User" src="/user-icon.svg" sx={{ width: 32, height: 32 }} />
       </IconButton>
@@ -57,6 +58,7 @@ export default function UserMenu() {
         transformOrigin={{ horizontal: 'right', vertical: 'top' }}
         anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
       >
+        {session && (<MenuItem>{session.user.name}</MenuItem>)}
         <SignInOutMenuItem status={status}/>
       </Menu>
     </div>

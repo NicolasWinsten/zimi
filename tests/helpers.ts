@@ -6,8 +6,6 @@ import { Page, Locator } from '@playwright/test';
 
 export interface GameState {
   tileStates: Array<{ char: string; match: number | null; color: string | null; shaking: boolean;  }>;
-  selectedTile: number | null;
-  completed: boolean;
   strikes: number;
 }
 
@@ -16,6 +14,14 @@ export interface SavedGameState {
   game: GameState;
   words: string[];
   milliseconds: number;
+}
+
+export function howToDialog(page: Page): Locator {
+  return page.getByTestId('how-to-dialog');
+}
+
+export function resumeGameDialog(page: Page): Locator {
+  return page.getByTestId('resume-game-dialog');
 }
 
 export function getGridElement(page: Page): Locator {
@@ -47,6 +53,57 @@ export async function closeHowToDialog(page: Page): Promise<void> {
   const startButton = page.getByTestId('how-to-start-button');
   await startButton.click();
   await page.getByTestId('how-to-dialog').waitFor({ state: 'detached' });
+}
+
+/**
+ * Close any open dialog modals on the page
+ * Waits for all dialogs to be closed before returning
+ * @param page 
+ */
+export async function closeAllDialogs(page: Page): Promise<void> {
+  // Check if any dialogs exist (MUI Dialog uses role="dialog")
+  const dialogs = page.locator('[role="dialog"]');
+  const dialogCount = await dialogs.count();
+  
+  if (dialogCount === 0) {
+    return; // No dialogs open
+  }
+
+  // Press ESC to close the topmost dialog
+  await page.press('body', 'Escape');
+  
+  // Wait for dialogs to be detached and recursively close any remaining dialogs
+  await page.waitForTimeout(300);
+  
+  // Recursively check if more dialogs exist
+  const remainingDialogs = await page.locator('[role="dialog"]').count();
+  if (remainingDialogs > 0) {
+    await closeAllDialogs(page); // Recursively close remaining dialogs
+  }
+}
+
+/**
+ * Login a test user assuming on main page and no user is logged in
+ * @param page 
+ * @param email 
+ * @param name 
+ */
+export async function loginTestUser(page: Page, email: string, name: string): Promise<void> {
+  const returnTo = page.url();
+  // Step 2: Click the user menu button
+  await page.getByTestId('user-menu-button').click();
+
+  // Step 3: Click the "Sign in" menu item
+  await page.getByTestId('sign-in-menu-item').click();
+
+  // Step 4: Fill in the test credentials form
+  await page.getByRole('textbox', { name: /email/i }).fill(email);
+  await page.getByRole('textbox', { name: /name/i }).fill(name);
+  
+  // Click the sign in button for the test credentials provider
+  await page.getByRole('button', { name: /sign in with test login/i }).click();
+  
+  await page.waitForURL(returnTo, {timeout: 10000})
 }
 
 export async function retrieveLocalSave(page: Page): Promise<SavedGameState | null> {

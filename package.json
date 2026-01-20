@@ -14,6 +14,7 @@
     "@mui/material": "^7.3.5",
     "@neondatabase/serverless": "^1.0.2",
     "bcrypt": "^6.0.0",
+    "dotenv": "^17.2.3",
     "immer": "^10.2.0",
     "motion": "^12.23.25",
     "net": "^1.0.2",

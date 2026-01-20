@@ -1,10 +1,10 @@
 "use server";
 import { authOptions } from 'app/api/auth/[...nextauth]/route';
-import bcrypt from 'bcrypt';
 import { getServerSession } from 'next-auth';
 import postgres from 'postgres';
+import { mkDateStr } from '../utils';
 
-const sql = postgres(process.env.POSTGRES_URL, { ssl: 'require' });
+const sql = postgres(process.env.DATABASE_URL, { ssl: 'require' });
 
 export async function getTopScores(limit = 10) {
   const scores = await sql`
@@ -19,123 +19,118 @@ export async function getTopScores(limit = 10) {
 
 /**
  * Submit how long the user took to finish today's game. If the given time is null,
- * it indicates the user did got three strikes and failed to complete the game.
- * @param {number} milliseconds 
- * @returns 
+ * it indicates the user got three strikes and failed to complete the game.
+ * @param {number | null} milliseconds - time taken to complete the game in milliseconds, null if user failed
+ * @param {string} date - date string in YYYY-MM-DD format
+ * @returns {object | null} the inserted row if submission was successful, null if user had already submitted for today
  */
-export async function submitDailyScore(milliseconds) {
+export async function submitDailyScore(milliseconds, date) {
   const session = await getServerSession(authOptions);
 
   if (session == null) {
-    throw new Error('User not authenticated');
+    throw new Error('Unauthenticated user tried to submit score');
   }
 
   const result = await sql`
     INSERT INTO daily_scores (user_id, date, milliseconds)
-    VALUES ((select id from users where email = ${session.user.email}), CURRENT_DATE, ${milliseconds})
+    VALUES ((select id from users where email = ${session.user.email}), ${date}, ${milliseconds})
     ON CONFLICT (user_id, date) DO NOTHING
     RETURNING *;
   `;
 
-  if (milliseconds !== null)
-    console.log(`${session.user.email} submitted a score of ${milliseconds} ms on ${new Date().toISOString().split('T')[0]}`);
-  else console.log(`${session.user.email} failed to complete today's game on ${new Date().toISOString().split('T')[0]}`);
-  return result 
+  console.log(`User ${session.user.email} submission result`, result);
+  return result.length > 0 ? result[0] : null;
 }
 
-// async function seedUsers() {
-//   await sql`CREATE EXTENSION IF NOT EXISTS "uuid-ossp"`;
-//   await sql`
-//     CREATE TABLE IF NOT EXISTS users (
-//       id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
-//       name VARCHAR(255) NOT NULL,
-//       email TEXT NOT NULL UNIQUE,
-//       password TEXT NOT NULL
-//     );
-//   `;
 
-//   const insertedUsers = await Promise.all(
-//     users.map(async (user) => {
-//       const hashedPassword = await bcrypt.hash(user.password, 10);
-//       return sql`
-//         INSERT INTO users (id, name, email, password)
-//         VALUES (${user.id}, ${user.name}, ${user.email}, ${hashedPassword})
-//         ON CONFLICT (id) DO NOTHING;
-//       `;
-//     }),
-//   );
+function streakRowToObj(row) {
+  return {
+    streak: row.current_streak_length,
+    longestStreak: row.longest_streak_length,
+    lastDate: row.current_streak_last_date ? mkDateStr(row.current_streak_last_date) : null
+  };
+}
 
-//   return insertedUsers;
-// }
+const emptyStreakObj = { streak: 0, longestStreak: 0, lastDate: null }
+/**
+ * Get the user's current streak information
+ * @returns {Promise<{streak: number, longestStreak: number, lastDate: string} | null>}
+ */
+export async function getStreakInfo() {
+  const session = await getServerSession(authOptions);
 
-// async function seedInvoices() {
-//   await sql`CREATE EXTENSION IF NOT EXISTS "uuid-ossp"`;
+  if (session == null) {
+    return null;
+  }
 
-//   await sql`
-//     CREATE TABLE IF NOT EXISTS invoices (
-//       id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
-//       customer_id UUID NOT NULL,
-//       amount INT NOT NULL,
-//       status VARCHAR(255) NOT NULL,
-//       date DATE NOT NULL
-//     );
-//   `;
+  const result = await sql`
+    SELECT current_streak_length, longest_streak_length, date(current_streak_last_date) as current_streak_last_date
+    FROM streaks
+    WHERE user_id = (select id from users where email = ${session.user.email})
+  `;
 
-//   const insertedInvoices = await Promise.all(
-//     invoices.map(
-//       (invoice) => sql`
-//         INSERT INTO invoices (customer_id, amount, status, date)
-//         VALUES (${invoice.customer_id}, ${invoice.amount}, ${invoice.status}, ${invoice.date})
-//         ON CONFLICT (id) DO NOTHING;
-//       `,
-//     ),
-//   );
+  if (result.length > 1) {
+    throw new Error('Error fetching streak for user ' + session.user.email);
+  } else if (result.length === 0) {
+    console.log("No streak data for user " + session.user.email);
+    return emptyStreakObj;
+  } else {
+    return streakRowToObj(result[0]);
+  }
 
-//   return insertedInvoices;
-// }
+}
 
-// async function seedCustomers() {
-//   await sql`CREATE EXTENSION IF NOT EXISTS "uuid-ossp"`;
+/**
+ * Update the user's streak after completing today's puzzle
+ * @param {boolean} completed - whether the user completed the puzzle (true) or failed (false)
+ * @param {string} date - date string in YYYY-MM-DD format
+ * @returns {Promise<{streak: number, longestStreak: number, lastDate: string} | null>} - true if streak was updated successfully
+ */
+export async function updateStreak(completed, date) {
+  const session = await getServerSession(authOptions);
 
-//   await sql`
-//     CREATE TABLE IF NOT EXISTS customers (
-//       id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
-//       name VARCHAR(255) NOT NULL,
-//       email VARCHAR(255) NOT NULL,
-//       image_url VARCHAR(255) NOT NULL
-//     );
-//   `;
+  if (session == null) {
+    throw new Error('Unauthenticated user tried to update streak');
+  }
 
-//   const insertedCustomers = await Promise.all(
-//     customers.map(
-//       (customer) => sql`
-//         INSERT INTO customers (id, name, email, image_url)
-//         VALUES (${customer.id}, ${customer.name}, ${customer.email}, ${customer.image_url})
-//         ON CONFLICT (id) DO NOTHING;
-//       `,
-//     ),
-//   );
+  // make the string for yesterday's date
+  const [year, month, day] = date.split('-').map(Number);
+  const dateObj = new Date(Date.UTC(year, month - 1, day));
+  const yesterdayObj = new Date(dateObj);
+  yesterdayObj.setUTCDate(yesterdayObj.getUTCDate() - 1);
+  const yesterdayStr = mkDateStr(yesterdayObj);
 
-//   return insertedCustomers;
-// }
+  // behold my SQL wizardry
+  // jk AI helped me write this
+  // it updates the user's streak based on whether they completed today's puzzle
+  const result = await sql`
+    INSERT INTO streaks (user_id, current_streak_length, longest_streak_length, current_streak_last_date)
+    VALUES (
+      (SELECT id FROM users WHERE email = ${session.user.email}),
+      CASE WHEN ${completed} THEN 1 ELSE 0 END,
+      CASE WHEN ${completed} THEN 1 ELSE 0 END,
+      CASE WHEN ${completed} THEN ${date}::date ELSE NULL END
+    )
+    ON CONFLICT (user_id) DO UPDATE SET
+      current_streak_length = CASE
+        WHEN ${completed} AND streaks.current_streak_last_date = ${yesterdayStr}::date THEN streaks.current_streak_length + 1
+        WHEN ${completed} THEN 1
+        ELSE 0
+      END,
+      longest_streak_length = GREATEST(
+        streaks.longest_streak_length,
+        CASE
+          WHEN ${completed} AND streaks.current_streak_last_date = ${yesterdayStr}::date THEN streaks.current_streak_length + 1
+          WHEN ${completed} THEN 1
+          ELSE 0
+        END
+      ),
+      current_streak_last_date = CASE WHEN ${completed} THEN ${date}::date ELSE NULL END
+    RETURNING *;
+  `;
 
-// async function seedRevenue() {
-//   await sql`
-//     CREATE TABLE IF NOT EXISTS revenue (
-//       month VARCHAR(4) NOT NULL UNIQUE,
-//       revenue INT NOT NULL
-//     );
-//   `;
+  console.log(`Updated streak for ${session.user.email}:`, result[0]);
 
-//   const insertedRevenue = await Promise.all(
-//     revenue.map(
-//       (rev) => sql`
-//         INSERT INTO revenue (month, revenue)
-//         VALUES (${rev.month}, ${rev.revenue})
-//         ON CONFLICT (month) DO NOTHING;
-//       `,
-//     ),
-//   );
+  return streakRowToObj(result[0]);
+}
 
-//   return insertedRevenue;
-// }
