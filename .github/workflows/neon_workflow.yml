@@ -46,6 +46,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET }}
+      NEXTAUTH_URL: http://localhost:3001 # URL of main page for testing after authoriztion redirect
     steps:
       - name: Get branch expiration date as an env variable (2 weeks from now)
         id: get_expiration_date
