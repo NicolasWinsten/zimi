@@ -15,7 +15,7 @@ import { useSession } from "next-auth/react";
 
 
 
-const makeShareableResultString = (gameState, milliseconds, dateSeed) => {
+const makeShareableResultString = (gameState, milliseconds, dateSeed, streak = null) => {
   const totalSeconds = Math.floor(milliseconds / 1000);
   const mins = Math.floor(totalSeconds / 60);
   const secs = totalSeconds % 60;
@@ -30,7 +30,9 @@ const makeShareableResultString = (gameState, milliseconds, dateSeed) => {
     return tileToEmoji(tile) + (isEndOfRow ? '\n' : '');
   }).join('');
 
-  return `My Daily Zimi\n${date.toDateString()}\n${grid}\n${'❌'.repeat(gameState.strikes)} ${gameState.strikes === 3 ? '😭' : timeStr}\n`
+  const streakLine = (streak !== null && streak > 0) ? `🔥 ${streak} day streak!\n` : '';
+
+  return `My Daily Zimi\n${date.toDateString()}\n${grid}\n${'❌'.repeat(gameState.strikes)} ${gameState.strikes === 3 ? '😭' : timeStr}\n${streakLine}`
 }
 
 /**
@@ -280,7 +282,7 @@ export default function GameSession({ words, shuffledChars, dateSeed, hskLevel, 
             onClick={() => {
               shareOnMobile({
                 title: 'My Daily Zimi',
-                text: makeShareableResultString(currentGameState, timerTotalMilliseconds(stopWatch), dateSeed),
+                text: makeShareableResultString(currentGameState, timerTotalMilliseconds(stopWatch), dateSeed, streakData?.streak),
                 url: "https://zimi-ten.vercel.app/"
               }, console.error)
             }}
